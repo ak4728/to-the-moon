@@ -6,5 +6,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Python check
-      run: python ./main.py
+      - name: Open Web Client Directory
+        working-directory: ak4728/to-the-moon
+        run: ls -la
+
+      - name: Open Web Client Directory
+        run: python ./main.py
