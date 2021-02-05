@@ -8,4 +8,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Main tests
-        run: python main.py
+        run:  echo "/usr/local/bin/" >> /etc/paths
