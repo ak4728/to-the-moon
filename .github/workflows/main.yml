@@ -7,5 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Open Web Client Directory
-        run: python ./main.py
+      - name: Main tests
+        run: python main.py
