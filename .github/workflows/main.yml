@@ -8,4 +8,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Main tests
-        run:  echo "/usr/local/bin/" >> /etc/paths
+        run:  sudo echo "/usr/local/bin/" >> /etc/paths
