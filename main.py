@@ -147,7 +147,6 @@ async def signalAlarm():
     f.close()               
     tickers = [x.strip() for x in tickers]
     embed = discord.Embed(color=15158332)
-    embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
 
     for ticker in tickers:
         # Tesla / U.S. Dollar
@@ -176,11 +175,21 @@ async def signalAlarm():
             rsi = {"rec": osc['COMPUTE']['RSI'], "value":ind['RSI']}
             macd = {"rec": osc['COMPUTE']['MACD'], "value":ind['MACD.macd'], "signal":ind['MACD.signal']}
             mom = {"rec": osc['COMPUTE']['Mom'], "value":ind['Mom']}
+
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
 
             if recs.count("BUY") == 2:
+                embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
+                embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
+                embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
+                embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
+                embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
+                hook.send(embed=embed)
+            if recs.count("SELL") == 2:
+                embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
+                embed.add_field(name="Recommendation", value="{}".format("SELL"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
