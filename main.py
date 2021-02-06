@@ -72,12 +72,24 @@ async def watchlist(stock, fun="add"):
 async def on_message(message):
     if message.content.startswith('!ticker '):
         ticker = message.content.split('!ticker')[1].split(" ")[1]
-        stock = TA_Handler(
-            symbol=ticker,
-            screener="america",
-            exchange="NASDAQ",
-            interval=Interval.INTERVAL_1_DAY
-        )
+
+        exchange = "NYSE"
+        while True:
+            try:
+                stock = TA_Handler(
+                    symbol=ticker,
+                    screener="america",
+                    exchange=exchange,
+                    interval=Interval.INTERVAL_4_HOURS
+                )
+                stock.get_analysis().indicators
+                break
+            except Exception as e:
+                if exchange == "NASDAQ":
+                    exchange = "NYSE"
+                else:
+                    exchange = "NASDAQ"            
+                continue
 
         embed = discord.Embed(color=4500277)
         embed.set_thumbnail(url=image)
@@ -124,7 +136,7 @@ async def on_message(message):
 
 
 
-@tasks.loop(seconds=300.0)
+@tasks.loop(seconds=1500.0)
 async def signalAlarm():
     await client.wait_until_ready()
     print("Loop started.")
@@ -134,6 +146,8 @@ async def signalAlarm():
         tickers = f.readlines()
     f.close()               
     tickers = [x.strip() for x in tickers]
+    embed = discord.Embed(color=15158332)
+    embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
 
     for ticker in tickers:
         # Tesla / U.S. Dollar
@@ -166,9 +180,12 @@ async def signalAlarm():
 
 
             if recs.count("BUY") == 2:
-                msg = "Ticker {}: RSI:{} - MACD-hist:{} - MOM:{}".format(ticker,rsi['value'], macd['value']-macd['signal'], mom['value']  )
-                print(msg)
-                hook.send(msg)
+                embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
+                embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
+                embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
+                embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
+                embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
+                hook.send(embed=embed)
         except Exception as e:
             print("Handler exception: ",e)
             pass
