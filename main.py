@@ -50,7 +50,7 @@ async def watchlist(stock, fun="add"):
     if fun == "add":
         with open("watchlist.txt", "r") as f:
             lines = f.readlines()
-            tickers = [x.strip() for x in lines]
+            tickers = [x.strip() for x in lines] 
             f.close()
             if stock.upper() not in tickers:
                 with open("watchlist.txt", "a") as f:
@@ -60,7 +60,7 @@ async def watchlist(stock, fun="add"):
             lines = f.readlines()
             tickers = [x.strip() for x in lines]
             f.close()
-            if stock.upper() in tickers:
+            if stock.upper() in tickers: 
                 with open("watchlist.txt", "w") as f:
                     for line in lines:
                         if line.strip("\n") != stock.upper():
@@ -146,10 +146,10 @@ async def signalAlarm():
         tickers = f.readlines()
     f.close()               
     tickers = [x.strip() for x in tickers]
-    embed = discord.Embed(color=15158332)
+    
 
     for ticker in tickers:
-        # Tesla / U.S. Dollar
+        
         exchange = "NYSE"
         while True:
             try:
@@ -180,14 +180,17 @@ async def signalAlarm():
 
 
             if recs.count("BUY") == 2:
+                embed = discord.Embed(color=12745742) 
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
                 embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
-                hook.send(embed=embed)
-            if recs.count("SELL") == 2:
+                hook.send(embed=embed) 
+
+            if recs.count("SELL") == 3:
+                embed = discord.Embed(color=7419530)
                 embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
                 embed.add_field(name="Recommendation", value="{}".format("SELL"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
