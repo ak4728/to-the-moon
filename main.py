@@ -139,8 +139,19 @@ async def on_message(message):
             await watchlist(str(stock), str(fun))   
         except Exception as e:
             print("Exception in Watchlist {}".format(e))
-
         await message.channel.send(embed=embed)
+
+    if message.content.startswith('!watchlist'):
+        embed = discord.Embed(color=json_data['watchlist_color'])
+        embed.set_thumbnail(url=image)
+        with open("watchlist.txt", "r") as f:
+            tickers = f.readlines()
+        f.close()               
+        tickers = [x.strip() for x in tickers]
+        await message.channel.send(tickers)
+        
+
+
 
 
 
@@ -223,5 +234,5 @@ async def on_ready():
     print('{} Logged In!'.format(client.user.name))
 
 
-signalAlarm.start()
+#signalAlarm.start()
 client.run(json_data['discord_token'])
