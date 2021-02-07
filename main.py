@@ -59,7 +59,7 @@ async def watchlist(stock, fun="add"):
             if stock.upper() not in tickers:
                 with open("watchlist.txt", "a") as f:
                     f.write(stock.upper()+"\n")
-    else:
+    elif fun == "remove":
         with open("watchlist.txt", "r") as f:
             lines = f.readlines()
             tickers = [x.strip() for x in lines]
@@ -72,16 +72,17 @@ async def watchlist(stock, fun="add"):
     f.close()
 
 
+
+
 @client.event
 async def on_message(message):
     if message.content.startswith('!ticker '):
         ticker = message.content.split('!ticker')[1].split(" ")[1]
-        exchange = cycle(["NYSE", "NASDAQ", "BINANCE"])
+        exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
         exc = "NYSE"
-        print(ticker)
         while True:
             try:
-                if exc == "BINANCE":
+                if exc in ["BINANCE", "BITTREX"]:
                     screener = "crypto"
                 else:
                     screener = "america"
@@ -94,7 +95,7 @@ async def on_message(message):
                 stock.get_analysis().indicators
                 break
             except Exception as e:
-                #print("Error on message: ", e)
+                print(ticker,exc, screener, e)
                 exc = next(exchange)
                 continue
 
@@ -113,14 +114,14 @@ async def on_message(message):
                 if ma == "osc":
                     await getAnalysis(embed,stock,"osc")
             except Exception as e:
-                #print("Exception in MA {}".format(e))
+                print("Exception in MA {}".format(e))
                 pass
             try:
                 osc = message.content.split('!ticker')[1].split(" ")[3]
                 if osc == "osc":
                     await getAnalysis(embed,stock,"osc")
             except Exception as e:
-                #print("Exception in OSC {}".format(e))
+                print("Exception in OSC {}".format(e))
                 pass
         except Exception as e:
             print("Try block exception Stock Rec: ",e)
@@ -156,11 +157,11 @@ async def signalAlarm():
     
 
     for ticker in tickers:
-        exchange = cycle(["NYSE", "NASDAQ", "BINANCE"])
+        exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
         exc = "NYSE"
         while True:
             try:
-                if exc == "BINANCE":
+                if exc in ["BINANCE", "BITTREX"]:
                     screener = "crypto"
                 else:
                     screener = "america"
@@ -173,6 +174,7 @@ async def signalAlarm():
                 stock.get_analysis().indicators
                 break
             except Exception as e:
+                print(ticker,exc, screener, e)
                 exc = next(exchange)
                 continue
 
@@ -187,7 +189,7 @@ async def signalAlarm():
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
 
-            if recs.count("BUY") == 2:
+            if recs.count("BUY") == 3:
                 embed = discord.Embed(color=json_data['buy_color']) 
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
@@ -197,7 +199,7 @@ async def signalAlarm():
                 embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
                 hook.send(embed=embed) 
 
-            if recs.count("SELL") == 2:
+            if recs.count("SELL") == 3:
                 embed = discord.Embed(color=json_data['sell_color'])
                 embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
                 embed.add_field(name="Recommendation", value="{}".format("SELL"), inline=False)
