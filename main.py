@@ -1,5 +1,6 @@
 import discord
 import json, logging, requests
+from itertools import cycle
 from discord.ext.commands import Bot
 from tradingview_ta import TA_Handler, Interval, Exchange
 from dhooks import Webhook
@@ -72,23 +73,25 @@ async def watchlist(stock, fun="add"):
 async def on_message(message):
     if message.content.startswith('!ticker '):
         ticker = message.content.split('!ticker')[1].split(" ")[1]
-
-        exchange = "NYSE"
+        exchange = cycle(["NYSE", "NASDAQ", "BINANCE"])
+        exc = "NYSE"
+        print(ticker)
         while True:
             try:
-                stock = TA_Handler(
+                if exc == "BINANCE":
+                    screener = "crypto"
+                else:
+                    screener = "america"
+                handler = TA_Handler(
                     symbol=ticker,
-                    screener="america",
-                    exchange=exchange,
+                    screener=screener,
+                    exchange=exc,
                     interval=Interval.INTERVAL_4_HOURS
                 )
-                stock.get_analysis().indicators
+                handler.get_analysis().indicators
                 break
             except Exception as e:
-                if exchange == "NASDAQ":
-                    exchange = "NYSE"
-                else:
-                    exchange = "NASDAQ"            
+                exc = next(exchange)
                 continue
 
         embed = discord.Embed(color=4500277)
@@ -149,23 +152,24 @@ async def signalAlarm():
     
 
     for ticker in tickers:
-        
-        exchange = "NYSE"
+        exchange = cycle(["NYSE", "NASDAQ", "BINANCE"])
+        exc = "NYSE"
         while True:
             try:
+                if exc == "BINANCE":
+                    screener = "crypto"
+                else:
+                    screener = "america"
                 handler = TA_Handler(
                     symbol=ticker,
-                    screener="america",
-                    exchange=exchange,
+                    screener=screener,
+                    exchange=exc,
                     interval=Interval.INTERVAL_4_HOURS
                 )
                 handler.get_analysis().indicators
                 break
             except Exception as e:
-                if exchange == "NASDAQ":
-                    exchange = "NYSE"
-                else:
-                    exchange = "NASDAQ"            
+                exc = next(exchange)
                 continue
 
         try:
@@ -179,7 +183,7 @@ async def signalAlarm():
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
 
-            if recs.count("BUY") == 2:
+            if recs.count("BUY") == 3:
                 embed = discord.Embed(color=12745742) 
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
