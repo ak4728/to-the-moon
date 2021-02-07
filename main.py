@@ -7,7 +7,6 @@ from dhooks import Webhook
 from discord.ext import commands, tasks
 import asyncio
 
-hook = Webhook('https://discordapp.com/api/webhooks/807142910453088296/ds0Zz9RTKL5F_CehGVEgp6gQS6lkAxt6dCDRCFdrNo6rWZlzDzg0lz6QkAwgBaD06Olj')
 
 # Configuration
 logger = logging.getLogger('discord')
@@ -18,6 +17,10 @@ logger.addHandler(handler)
 
 with open('config.json') as json_file:
     json_data = json.load(json_file)
+
+
+hook = Webhook(json_data['webhook_url'])
+
 
 image = "https://nineplanets.org/wp-content/uploads/2019/09/moon.png"
 user_agent = json_data['user_agent']
@@ -82,19 +85,20 @@ async def on_message(message):
                     screener = "crypto"
                 else:
                     screener = "america"
-                handler = TA_Handler(
+                stock = TA_Handler(
                     symbol=ticker,
                     screener=screener,
                     exchange=exc,
                     interval=Interval.INTERVAL_4_HOURS
                 )
-                handler.get_analysis().indicators
+                stock.get_analysis().indicators
                 break
             except Exception as e:
+                #print("Error on message: ", e)
                 exc = next(exchange)
                 continue
 
-        embed = discord.Embed(color=4500277)
+        embed = discord.Embed(color=json_data['ticker_color'])
         embed.set_thumbnail(url=image)
         try:
             embed.add_field(name="Stock", value="${}".format(stock.get_analysis().symbol.upper()), inline=False)
@@ -109,23 +113,23 @@ async def on_message(message):
                 if ma == "osc":
                     await getAnalysis(embed,stock,"osc")
             except Exception as e:
-                print("Exception in MA {}".format(e))
+                #print("Exception in MA {}".format(e))
                 pass
             try:
                 osc = message.content.split('!ticker')[1].split(" ")[3]
                 if osc == "osc":
                     await getAnalysis(embed,stock,"osc")
             except Exception as e:
-                print("Exception in OSC {}".format(e))
+                #print("Exception in OSC {}".format(e))
                 pass
         except Exception as e:
-            print(e)
+            print("Try block exception Stock Rec: ",e)
             embed.add_field(name="Exception", value="{}".format("Ticker not found."), inline=True)
 
         await message.channel.send(embed=embed)
 
     if message.content.startswith('!watchlist '):
-        embed = discord.Embed(color=3447003)
+        embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url=image)
         try:
             fun = message.content.split('!watchlist ')[1].split(" ")[0]
@@ -160,22 +164,22 @@ async def signalAlarm():
                     screener = "crypto"
                 else:
                     screener = "america"
-                handler = TA_Handler(
+                stock = TA_Handler(
                     symbol=ticker,
                     screener=screener,
                     exchange=exc,
                     interval=Interval.INTERVAL_4_HOURS
                 )
-                handler.get_analysis().indicators
+                stock.get_analysis().indicators
                 break
             except Exception as e:
                 exc = next(exchange)
                 continue
 
         try:
-            ind = handler.get_analysis().indicators
-            osc = handler.get_analysis().oscillators
-            ma = handler.get_analysis().moving_averages
+            ind = stock.get_analysis().indicators
+            osc = stock.get_analysis().oscillators
+            ma = stock.get_analysis().moving_averages
             rsi = {"rec": osc['COMPUTE']['RSI'], "value":ind['RSI']}
             macd = {"rec": osc['COMPUTE']['MACD'], "value":ind['MACD.macd'], "signal":ind['MACD.signal']}
             mom = {"rec": osc['COMPUTE']['Mom'], "value":ind['Mom']}
@@ -183,8 +187,8 @@ async def signalAlarm():
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
 
-            if recs.count("BUY") == 3:
-                embed = discord.Embed(color=12745742) 
+            if recs.count("BUY") == 2:
+                embed = discord.Embed(color=json_data['buy_color']) 
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
@@ -193,8 +197,8 @@ async def signalAlarm():
                 embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
                 hook.send(embed=embed) 
 
-            if recs.count("SELL") == 3:
-                embed = discord.Embed(color=7419530)
+            if recs.count("SELL") == 2:
+                embed = discord.Embed(color=json_data['sell_color'])
                 embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
                 embed.add_field(name="Recommendation", value="{}".format("SELL"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
@@ -219,4 +223,3 @@ async def on_ready():
 
 signalAlarm.start()
 client.run(json_data['discord_token'])
-
