@@ -7,5 +7,7 @@
 	"watchlist_color": 3447003,
 	"ticker_color": 4500277,
 	"image" :"https://nineplanets.org/wp-content/uploads/2019/09/moon.png",
-	"webhook_url" : ""
+	"webhook_url" : "",
+	"default_int" :"4-hours"
+
 }
