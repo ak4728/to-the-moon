@@ -18,16 +18,13 @@ logger.addHandler(handler)
 with open('config.json') as json_file:
     json_data = json.load(json_file)
 
-
 hook = Webhook(json_data['webhook_url'])
-
 
 image = "https://nineplanets.org/wp-content/uploads/2019/09/moon.png"
 user_agent = json_data['user_agent']
-
+interval = Interval.INTERVAL_4_HOURS
 
 client = discord.Client()
-
 
 async def getAnalysis(embed, stock, method = 'ma'):
     method = method
@@ -72,32 +69,38 @@ async def watchlist(stock, fun="add"):
     f.close()
 
 
+async def get_ticker(ticker = "TSLA", interval = Interval.INTERVAL_4_HOURS):
+    exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
+    exc = "NYSE"
+    ticker = ticker
+    stock = ""
+    interval = interval 
+    while True:
+        try:
+            if exc in ["BINANCE", "BITTREX"]:
+                screener = "crypto"
+            else:
+                screener = "america"
+            stock = TA_Handler(
+                symbol=ticker,
+                screener=screener,
+                exchange=exc,
+                interval=interval
+            )
+            stock.get_analysis().indicators
+            break
+        except Exception as e:
+            print(ticker,exc, screener, e)
+            exc = next(exchange)
+            continue
+    return(stock)
 
 
 @client.event
 async def on_message(message):
     if message.content.startswith('!ticker '):
         ticker = message.content.split('!ticker')[1].split(" ")[1]
-        exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
-        exc = "NYSE"
-        while True:
-            try:
-                if exc in ["BINANCE", "BITTREX"]:
-                    screener = "crypto"
-                else:
-                    screener = "america"
-                stock = TA_Handler(
-                    symbol=ticker,
-                    screener=screener,
-                    exchange=exc,
-                    interval=Interval.INTERVAL_4_HOURS
-                )
-                stock.get_analysis().indicators
-                break
-            except Exception as e:
-                print(ticker,exc, screener, e)
-                exc = next(exchange)
-                continue
+        stock = await get_ticker(ticker, interval)
 
         embed = discord.Embed(color=json_data['ticker_color'])
         embed.set_thumbnail(url=image)
@@ -151,16 +154,12 @@ async def on_message(message):
         await message.channel.send(tickers)
         
 
-
-
-
-
 @tasks.loop(seconds=1500.0)
 async def signalAlarm():
     await client.wait_until_ready()
     print("Loop started.")
 
-
+    
     with open("watchlist.txt", "r") as f:
         tickers = f.readlines()
     f.close()               
@@ -168,27 +167,7 @@ async def signalAlarm():
     
 
     for ticker in tickers:
-        exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
-        exc = "NYSE"
-        while True:
-            try:
-                if exc in ["BINANCE", "BITTREX"]:
-                    screener = "crypto"
-                else:
-                    screener = "america"
-                stock = TA_Handler(
-                    symbol=ticker,
-                    screener=screener,
-                    exchange=exc,
-                    interval=Interval.INTERVAL_4_HOURS
-                )
-                stock.get_analysis().indicators
-                break
-            except Exception as e:
-                print(ticker,exc, screener, e)
-                exc = next(exchange)
-                continue
-
+        stock = await get_ticker(ticker,interval)
         try:
             ind = stock.get_analysis().indicators
             osc = stock.get_analysis().oscillators
@@ -223,8 +202,6 @@ async def signalAlarm():
             print("Handler exception: ",e)
             pass
 
-
-
 @signalAlarm.before_loop
 async def signalAlarm_before():
     await client.wait_until_ready()
@@ -233,6 +210,5 @@ async def signalAlarm_before():
 async def on_ready():
     print('{} Logged In!'.format(client.user.name))
 
-
-#signalAlarm.start()
+signalAlarm.start()
 client.run(json_data['discord_token'])
