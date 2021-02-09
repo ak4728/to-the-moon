@@ -229,5 +229,5 @@ async def signalAlarm_before():
 async def on_ready():
     print('{} Logged In!'.format(client.user.name))
 
-#signalAlarm.start()
+signalAlarm.start()
 client.run(json_data['discord_token'])
