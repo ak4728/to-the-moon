@@ -4,3 +4,7 @@ config.json
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/misc.xml
 .idea/to-the-moon.iml
+.vscode/launch.json
+discord.log
+watchlist.txt
+watchlist.txt
