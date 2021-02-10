@@ -1,11 +1,15 @@
 import discord
 import json, logging, requests
-from itertools import cycle
+
+import asyncio
+
 from discord.ext.commands import Bot
 from tradingview_ta import TA_Handler, Interval, Exchange
 from dhooks import Webhook
 from discord.ext import commands, tasks
-import asyncio
+from itertools import cycle
+from utils import *
+
 
 
 # Configuration
@@ -84,13 +88,10 @@ async def get_ticker(ticker = "TSLA", interval = Interval.INTERVAL_4_HOURS):
     exc = "NYSE"
     ticker = ticker
     stock = ""
-    interval = interval 
+    interval = interval
+    screener, exc = get_market_exchange(ticker)
     while True:
         try:
-            if exc in ["BINANCE", "BITTREX"]:
-                screener = "crypto"
-            else:
-                screener = "america"
             stock = TA_Handler(
                 symbol=ticker,
                 screener=screener,
@@ -100,7 +101,7 @@ async def get_ticker(ticker = "TSLA", interval = Interval.INTERVAL_4_HOURS):
             stock.get_analysis().indicators
             break
         except Exception as e:
-            print(ticker,exc, screener, e)
+            print(ticker, exc, screener, e)
             exc = next(exchange)
             continue
     return(stock)
