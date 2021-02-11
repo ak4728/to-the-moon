@@ -7,7 +7,8 @@ def get_market_exchange(ticker):
     r = requests.get(symbol_url.format(ticker))
     for el in r.json():
         if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX']:
-            response = el
+            if el['symbol'] == ticker.upper():
+                response = el
     screener = response['type']
     exc = response['exchange']
     if exc in ['NYSE', 'NASDAQ']:

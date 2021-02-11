@@ -110,12 +110,11 @@ async def get_ticker(ticker = "TSLA", interval = Interval.INTERVAL_4_HOURS):
 @client.event
 async def on_message(message):
     if message.content.startswith('!ticker '):
-        ticker = message.content.split('!ticker')[1].split(" ")[1]
-        stock = await get_ticker(ticker, intervals[selected])
-
         embed = discord.Embed(color=json_data['ticker_color'])
         embed.set_thumbnail(url=image)
         try:
+            ticker = message.content.split('!ticker')[1].split(" ")[1]
+            stock = await get_ticker(ticker, intervals[selected])
             embed.add_field(name="Stock", value="${}".format(stock.get_analysis().symbol.upper()), inline=False)
             embed.add_field(name="Recommendation", value="{}".format(stock.get_analysis().summary['RECOMMENDATION']), inline=False)
             embed.add_field(name="Buy", value="{}".format(stock.get_analysis().summary['BUY']), inline=True)
@@ -188,6 +187,7 @@ async def signalAlarm():
 
     for ticker in tickers:
         stock = await get_ticker(ticker,intervals[selected])
+        await asyncio.sleep(0.1)
         try:
             ind = stock.get_analysis().indicators
             osc = stock.get_analysis().oscillators
