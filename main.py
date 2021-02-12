@@ -71,21 +71,21 @@ async def watchlist(ticker, fun="add"):
     '''
     if fun == "add":
         screener, exchange = get_market_exchange(ticker)
-        with open("watchlist2.txt", "r") as f:
+        with open("watchlist.txt", "r") as f:
             data = json.load(f)
             f.close()
             if ticker.upper() not in list(data.keys()):
-                with open("watchlist2.txt", "w") as f:
+                with open("watchlist.txt", "w") as f:
                     data[ticker] = {"screener": screener, "exchange": exchange}
                     json.dump(data, f)
                 f.close()
     if fun == "remove":
         screener, exchange = get_market_exchange(ticker)
-        with open("watchlist2.txt", "r") as f:
+        with open("watchlist.txt", "r") as f:
             data = json.load(f)
             f.close()
             if ticker.upper() in list(data.keys()):
-                with open("watchlist2.txt", "w") as f:
+                with open("watchlist.txt", "w") as f:
                     data.pop(ticker, None)
                     json.dump(data, f)
                 f.close()
@@ -158,7 +158,7 @@ async def on_message(message):
     if message.content.startswith('!watchlist'):
         embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url=image)
-        with open("watchlist2.txt", "r") as f:
+        with open("watchlist.txt", "r") as f:
             tickers = list(json.load(f).keys())
         f.close()
         await message.channel.send(tickers)
