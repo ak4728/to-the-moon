@@ -10,8 +10,6 @@ from discord.ext import commands, tasks
 from itertools import cycle
 from utils import *
 
-
-
 # Configuration
 logger = logging.getLogger('discord')
 logger.setLevel(logging.ERROR)
@@ -28,83 +26,83 @@ image = "https://nineplanets.org/wp-content/uploads/2019/09/moon.png"
 user_agent = json_data['user_agent']
 selected = json_data['default_int']
 
-intervals =  {"1-minute":Interval.INTERVAL_1_MINUTE,
-                "5-minutes":Interval.INTERVAL_5_MINUTES,
-                "15-minutes":Interval.INTERVAL_15_MINUTES,
-                "1-hour":Interval.INTERVAL_1_HOUR,
-                "4-hours":Interval.INTERVAL_4_HOURS,
-                "1-day":Interval.INTERVAL_1_DAY,
-                "1-week":Interval.INTERVAL_1_WEEK,
-                "1-month":Interval.INTERVAL_1_MONTH,
-            }
+intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
+             "5-minutes": Interval.INTERVAL_5_MINUTES,
+             "15-minutes": Interval.INTERVAL_15_MINUTES,
+             "1-hour": Interval.INTERVAL_1_HOUR,
+             "4-hours": Interval.INTERVAL_4_HOURS,
+             "1-day": Interval.INTERVAL_1_DAY,
+             "1-week": Interval.INTERVAL_1_WEEK,
+             "1-month": Interval.INTERVAL_1_MONTH,
+             }
 
 client = discord.Client()
 
-async def getAnalysis(embed, stock, method = 'ma'):
+
+async def get_analysis(embed, stock, method='ma'):
     method = method
     if method == 'ma':
         d = stock.get_analysis().moving_averages
-        for k,v in d.items():
+        for k, v in d.items():
             if k == "RECOMMENDATION":
-                embed.add_field(name="Moving Avgs Recommendation", value="{}".format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
+                embed.add_field(name="Moving Avgs Recommendation",
+                                value='{}'.format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
             if k == "COMPUTE":
                 compute = stock.get_analysis().moving_averages['COMPUTE']
-                for x,y in compute.items():
+                for x, y in compute.items():
                     embed.add_field(name=str(x), value="{}".format(y), inline=True)
     if method == 'osc':
         d = stock.get_analysis().oscillators
-        for k,v in d.items():
+        for k, v in d.items():
             if k == "RECOMMENDATION":
-                embed.add_field(name="Oscillators Recommendation", value="{}".format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
+                embed.add_field(name="Oscillators Recommendation",
+                                value="{}".format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
             if k == "COMPUTE":
                 compute = stock.get_analysis().oscillators['COMPUTE']
-                for x,y in compute.items():
+                for x, y in compute.items():
                     embed.add_field(name=str(x), value="{}".format(y), inline=True)
 
-async def watchlist(stock, fun="add"):
+
+async def watchlist(ticker, fun="add"):
+    '''
+    Adds/removes the stock to the watchlist dictionary
+    E.g. watchlist("TSLA", "add")
+    '''
     if fun == "add":
-        with open("watchlist.txt", "r") as f:
-            lines = f.readlines()
-            tickers = [x.strip() for x in lines] 
+        screener, exchange = get_market_exchange(ticker)
+        with open("watchlist2.txt", "r") as f:
+            data = json.load(f)
             f.close()
-            if stock.upper() not in tickers:
-                with open("watchlist.txt", "a") as f:
-                    f.write(stock.upper()+"\n")
-    elif fun == "remove":
-        with open("watchlist.txt", "r") as f:
-            lines = f.readlines()
-            tickers = [x.strip() for x in lines]
+            if ticker.upper() not in list(data.keys()):
+                with open("watchlist2.txt", "w") as f:
+                    data[ticker] = {"screener": screener, "exchange": exchange}
+                    json.dump(data, f)
+                f.close()
+    if fun == "remove":
+        screener, exchange = get_market_exchange(ticker)
+        with open("watchlist2.txt", "r") as f:
+            data = json.load(f)
             f.close()
-            if stock.upper() in tickers: 
-                with open("watchlist.txt", "w") as f:
-                    for line in lines:
-                        if line.strip("\n") != stock.upper():
-                            f.write(line.upper())
-    f.close()
+            if ticker.upper() in list(data.keys()):
+                with open("watchlist2.txt", "w") as f:
+                    data.pop(ticker, None)
+                    json.dump(data, f)
+                f.close()
 
 
-async def get_ticker(ticker = "TSLA", interval = Interval.INTERVAL_4_HOURS):
-    exchange = cycle(["NYSE", "NASDAQ", "BINANCE", "BITTREX"])
-    exc = "NYSE"
-    ticker = ticker
-    stock = ""
-    interval = interval
-    screener, exc = get_market_exchange(ticker)
-    while True:
-        try:
-            stock = TA_Handler(
-                symbol=ticker,
-                screener=screener,
-                exchange=exc,
-                interval=interval
-            )
-            stock.get_analysis().indicators
-            break
-        except Exception as e:
-            print(ticker, exc, screener, e)
-            exc = next(exchange)
-            continue
-    return(stock)
+async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener = None, exc = None):
+    if screener == None and exc == None:
+        screener, exc = get_market_exchange(ticker)
+    try:
+        stock = TA_Handler(
+            symbol=ticker,
+            screener=screener,
+            exchange=exc,
+            interval=interval
+        )
+    except Exception as e:
+        print(ticker, exc, screener, e)
+    return (stock)
 
 
 @client.event
@@ -115,29 +113,30 @@ async def on_message(message):
         try:
             ticker = message.content.split('!ticker')[1].split(" ")[1]
             stock = await get_ticker(ticker, intervals[selected])
-            embed.add_field(name="Stock", value="${}".format(stock.get_analysis().symbol.upper()), inline=False)
-            embed.add_field(name="Recommendation", value="{}".format(stock.get_analysis().summary['RECOMMENDATION']), inline=False)
-            embed.add_field(name="Buy", value="{}".format(stock.get_analysis().summary['BUY']), inline=True)
-            embed.add_field(name="Sell", value="{}".format(stock.get_analysis().summary['SELL']), inline=True)
-            embed.add_field(name="Neutral", value="{}".format(stock.get_analysis().summary['NEUTRAL']), inline=True)
+            analyzed = stock.get_analysis()
+            embed.add_field(name="Stock", value="${}".format(analyzed.symbol.upper()), inline=False)
+            embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']), inline=False)
+            embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
+            embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)
+            embed.add_field(name="Neutral", value="{}".format(analyzed.summary['NEUTRAL']), inline=True)
             try:
                 ma = message.content.split('!ticker')[1].split(" ")[2]
                 if ma == "ma":
-                    await getAnalysis(embed,stock,"ma")
+                    await get_analysis(embed, stock, "ma")
                 if ma == "osc":
-                    await getAnalysis(embed,stock,"osc")
+                    await get_analysis(embed, stock, "osc")
             except Exception as e:
                 print("Exception in MA {}".format(e))
                 pass
             try:
                 osc = message.content.split('!ticker')[1].split(" ")[3]
                 if osc == "osc":
-                    await getAnalysis(embed,stock,"osc")
+                    await get_analysis(embed, stock, "osc")
             except Exception as e:
                 print("Exception in OSC {}".format(e))
                 pass
         except Exception as e:
-            print("Try block exception Stock Rec: ",e)
+            print("Try block exception Stock Rec: ", e)
             embed.add_field(name="Exception", value="{}".format("Ticker not found."), inline=True)
 
         await message.channel.send(embed=embed)
@@ -148,8 +147,9 @@ async def on_message(message):
         try:
             fun = message.content.split('!watchlist ')[1].split(" ")[0]
             stock = message.content.split('!watchlist ')[1].split(" ")[1]
-            embed.add_field(name="Watchlist is updated. Function: {}.".format(fun.upper()), value="${}".format(stock.upper()), inline=True)
-            await watchlist(str(stock), str(fun))   
+            embed.add_field(name="Watchlist is updated. Function: {}.".format(fun.upper()),
+                            value="${}".format(stock.upper()), inline=True)
+            await watchlist(str(stock), str(fun))
         except Exception as e:
             print("Exception in Watchlist {}".format(e))
         await message.channel.send(embed=embed)
@@ -157,57 +157,53 @@ async def on_message(message):
     if message.content.startswith('!watchlist'):
         embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url=image)
-        with open("watchlist.txt", "r") as f:
-            tickers = f.readlines()
-        f.close()               
-        tickers = [x.strip() for x in tickers]
+        with open("watchlist2.txt", "r") as f:
+            tickers = list(json.load(f).keys())
+        f.close()
         await message.channel.send(tickers)
 
     if message.content.startswith('!interval '):
         print(intervals[selected])
         embed = discord.Embed(color=json_data['watchlist_color'])
-        embed.set_thumbnail(url=image)   
+        embed.set_thumbnail(url=image)
         globals()['selected'] = message.content.split('!interval ')[1].split(" ")[0]
-        embed.add_field(name = "Interval setting is updated.", value=intervals[selected], inline=True)
+        embed.add_field(name="Interval setting is updated.", value=intervals[selected], inline=True)
         print(intervals[selected])
         await message.channel.send(embed=embed)
-        
+
 
 @tasks.loop(seconds=1500.0)
 async def signalAlarm():
     await client.wait_until_ready()
     print("Loop started.")
 
-    
     with open("watchlist.txt", "r") as f:
-        tickers = f.readlines()
-    f.close()               
-    tickers = [x.strip() for x in tickers]
-    
+        tickers = list(json.load(f).keys())
+    f.close()
 
     for ticker in tickers:
-        stock = await get_ticker(ticker,intervals[selected])
-        await asyncio.sleep(0.1)
+        stock = await get_ticker(ticker, intervals[selected])
+        await asyncio.sleep(0.01)
         try:
-            ind = stock.get_analysis().indicators
-            osc = stock.get_analysis().oscillators
-            ma = stock.get_analysis().moving_averages
-            rsi = {"rec": osc['COMPUTE']['RSI'], "value":ind['RSI']}
-            macd = {"rec": osc['COMPUTE']['MACD'], "value":ind['MACD.macd'], "signal":ind['MACD.signal']}
-            mom = {"rec": osc['COMPUTE']['Mom'], "value":ind['Mom']}
+            analyzed = stock.get_analysis()
+            ind = analyzed.indicators
+            osc = analyzed.oscillators
+            ma = analyzed.moving_averages
+            rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
+            macd = {"rec": osc['COMPUTE']['MACD'], "value": ind['MACD.macd'], "signal": ind['MACD.signal']}
+            mom = {"rec": osc['COMPUTE']['Mom'], "value": ind['Mom']}
 
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
-
             if recs.count("BUY") == 3:
-                embed = discord.Embed(color=json_data['buy_color']) 
+                embed = discord.Embed(color=json_data['buy_color'])
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
                 embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
-                hook.send(embed=embed) 
+                hook.send(embed=embed)
 
             if recs.count("SELL") == 3:
                 embed = discord.Embed(color=json_data['sell_color'])
@@ -219,16 +215,19 @@ async def signalAlarm():
                 embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
                 hook.send(embed=embed)
         except Exception as e:
-            print("Handler exception: ",e)
+            print("Handler exception: ", e)
             pass
+
 
 @signalAlarm.before_loop
 async def signalAlarm_before():
     await client.wait_until_ready()
 
+
 @client.event
 async def on_ready():
     print('{} Logged In!'.format(client.user.name))
+
 
 signalAlarm.start()
 client.run(json_data['discord_token'])
