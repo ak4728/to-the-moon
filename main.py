@@ -86,7 +86,7 @@ async def watchlist(ticker, fun="add"):
             f.close()
             if ticker.upper() in list(data.keys()):
                 with open("watchlist.txt", "w") as f:
-                    data = data.pop(ticker, None)
+                    data.pop(ticker, None)
                     json.dump(data, f)
                 f.close()
 
