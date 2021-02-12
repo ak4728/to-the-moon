@@ -39,26 +39,27 @@ intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
 client = discord.Client()
 
 
-async def get_analysis(embed, stock, method='ma'):
+async def get_ma_osc(embed, stock, method='ma'):
     method = method
+    analyzed = stock.get_analysis()
     if method == 'ma':
-        d = stock.get_analysis().moving_averages
+        d = analyzed.moving_averages
         for k, v in d.items():
             if k == "RECOMMENDATION":
                 embed.add_field(name="Moving Avgs Recommendation",
-                                value='{}'.format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
+                                value='{}'.format(d['RECOMMENDATION']), inline=False)
             if k == "COMPUTE":
-                compute = stock.get_analysis().moving_averages['COMPUTE']
+                compute = d['COMPUTE']
                 for x, y in compute.items():
                     embed.add_field(name=str(x), value="{}".format(y), inline=True)
     if method == 'osc':
-        d = stock.get_analysis().oscillators
+        d = analyzed.oscillators
         for k, v in d.items():
             if k == "RECOMMENDATION":
                 embed.add_field(name="Oscillators Recommendation",
-                                value="{}".format(stock.get_analysis().moving_averages['RECOMMENDATION']), inline=False)
+                                value="{}".format(d['RECOMMENDATION']), inline=False)
             if k == "COMPUTE":
-                compute = stock.get_analysis().oscillators['COMPUTE']
+                compute = d['COMPUTE']
                 for x, y in compute.items():
                     embed.add_field(name=str(x), value="{}".format(y), inline=True)
 
@@ -122,16 +123,16 @@ async def on_message(message):
             try:
                 ma = message.content.split('!ticker')[1].split(" ")[2]
                 if ma == "ma":
-                    await get_analysis(embed, stock, "ma")
+                    await get_ma_osc(embed, stock, "ma")
                 if ma == "osc":
-                    await get_analysis(embed, stock, "osc")
+                    await get_ma_osc(embed, stock, "osc")
             except Exception as e:
                 print("Exception in MA {}".format(e))
                 pass
             try:
                 osc = message.content.split('!ticker')[1].split(" ")[3]
                 if osc == "osc":
-                    await get_analysis(embed, stock, "osc")
+                    await get_ma_osc(embed, stock, "osc")
             except Exception as e:
                 print("Exception in OSC {}".format(e))
                 pass
