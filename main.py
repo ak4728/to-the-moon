@@ -76,7 +76,7 @@ async def watchlist(ticker, fun="add"):
             f.close()
             if ticker.upper() not in list(data.keys()):
                 with open("watchlist.txt", "w") as f:
-                    data[ticker] = {"screener": screener, "exchange": exchange}
+                    data[ticker.upper()] = {"screener": screener, "exchange": exchange}
                     json.dump(data, f)
                 f.close()
     if fun == "remove":
@@ -86,7 +86,7 @@ async def watchlist(ticker, fun="add"):
             f.close()
             if ticker.upper() in list(data.keys()):
                 with open("watchlist.txt", "w") as f:
-                    data.pop(ticker, None)
+                    data = data.pop(ticker, None)
                     json.dump(data, f)
                 f.close()
 
