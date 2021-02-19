@@ -191,19 +191,25 @@ async def signalAlarm():
             osc = analyzed.oscillators
             ma = analyzed.moving_averages
             rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
+
+            if rsi['value'] < 50:
+                rsi['rec'] = 'BUY'
+            else:
+                rsi['rec'] = 'SELL'
+
             macd = {"rec": osc['COMPUTE']['MACD'], "value": ind['MACD.macd'], "signal": ind['MACD.signal']}
             mom = {"rec": osc['COMPUTE']['STOCH.K'], "value": ind['Stoch.K']}
 
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
-            if recs.count("BUY") == 2:
+            if recs.count("BUY") == 3:
                 embed = discord.Embed(color=json_data['buy_color'])
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
-                embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
+                embed.add_field(name="Stochastic", value="{}".format(mom['value']), inline=True)
                 hook.send(embed=embed)
 
             if recs.count("SELL") == 3:
@@ -213,7 +219,7 @@ async def signalAlarm():
                 embed.add_field(name="Stock", value="${}".format(ticker), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
-                embed.add_field(name="MOM", value="{}".format(mom['value']), inline=True)
+                embed.add_field(name="Stochastic", value="{}".format(mom['value']), inline=True)
                 hook.send(embed=embed)
         except Exception as e:
             print("Handler exception: ", e)
