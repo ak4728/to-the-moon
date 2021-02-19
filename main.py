@@ -116,6 +116,7 @@ async def on_message(message):
             stock = await get_ticker(ticker, intervals[selected])
             analyzed = stock.get_analysis()
             embed.add_field(name="Stock", value="${}".format(analyzed.symbol.upper()), inline=False)
+            embed.add_field(name="Price", value="${}".format(get_ticker_price(ticker.upper())), inline=False)
             embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']), inline=False)
             embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
             embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)

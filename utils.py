@@ -1,8 +1,7 @@
 # helper functions will go here
 import requests, random
 
-
-with open('./to-the-moon/config.json') as json_file:
+with open('config.json') as json_file:
     json_data = json.load(json_file)
 
 def get_market_exchange(ticker):
