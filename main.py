@@ -192,7 +192,7 @@ async def signalAlarm():
             ma = analyzed.moving_averages
             rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
             macd = {"rec": osc['COMPUTE']['MACD'], "value": ind['MACD.macd'], "signal": ind['MACD.signal']}
-            mom = {"rec": osc['COMPUTE']['STOCH.K'], "value": ind['STOCH.K']}
+            mom = {"rec": osc['COMPUTE']['STOCH.K'], "value": ind['Stoch.K']}
 
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
