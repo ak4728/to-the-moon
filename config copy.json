@@ -7,6 +7,8 @@
 	"watchlist_color": 3447003,
 	"ticker_color": 4500277,
 	"image" :"https://nineplanets.org/wp-content/uploads/2019/09/moon.png",
-	"webhook_url" : "",
-	"default_int" :"4-hours"
+	"webhook_url" : "https://discordapp.com/api/webhooks/807142910453088296/ds0Zz9RTKL5F_CehGVEgp6gQS6lkAxt6dCDRCFdrNo6rWZlzDzg0lz6QkAwgBaD06Olj",
+	"default_int" :"4-hours",
+	"api_url": "https://query1.finance.yahoo.com/v7/finance/quote?&symbols={}&fields=regularMarketPrice",
+	"symbol_url":"https://symbol-search.tradingview.com/symbol_search/?text={}"
 }
