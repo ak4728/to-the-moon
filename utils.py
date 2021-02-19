@@ -10,7 +10,7 @@ def get_market_exchange(ticker):
             if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX', "ARCA"]:
                 response = el
             else:
-                print(el['exchange'])
+                print(el['symbol'])
     if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA']:
         screener = "america"
     else:
