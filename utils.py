@@ -11,7 +11,7 @@ def get_market_exchange(ticker):
                 response = el
                 if el['exchange'] == "NYSE ARCA & MKT":
                     response['exchange'] = "AMEX"
-    if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA']:
+    if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA',"AMEX"]:
         screener = "america"
     else:
         screener = "crypto"
