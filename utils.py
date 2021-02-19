@@ -20,7 +20,8 @@ def get_market_exchange(ticker):
 
 
 def get_ticker_price(ticker):
-    if "usd" in ticker:
-        ticker = ticker.split("usd")[0]+"-usd"
+    if "USD" in ticker.upper():
+        ticker = ticker.upper().split("USD")[0]+"-USD"
+    print(ticker)
     r = requests.get(json_data['api_url'].format(ticker.upper()))
     return(r.json()['quoteResponse']['result'][0]['regularMarketPrice'])
