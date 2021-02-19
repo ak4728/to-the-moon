@@ -20,5 +20,5 @@ def get_market_exchange(ticker):
 
 
 def get_ticker_price(ticker):
-    r = requests.get(json_data['api_url'].format(ticker.upper(), random.choice(json_data['api_keys'])))
-    return(r.json()['Global Quote']['05. price'])
+    r = requests.get(json_data['api_url'].format(ticker.upper()))
+    return (r.json()['quoteResponse']['result'][0]['regularMarketPrice'])
