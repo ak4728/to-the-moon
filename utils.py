@@ -1,5 +1,5 @@
 # helper functions will go here
-import requests, random
+import requests, random, json
 
 with open('config.json') as json_file:
     json_data = json.load(json_file)
