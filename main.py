@@ -192,11 +192,11 @@ async def signalAlarm():
             ma = analyzed.moving_averages
             rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
             macd = {"rec": osc['COMPUTE']['MACD'], "value": ind['MACD.macd'], "signal": ind['MACD.signal']}
-            mom = {"rec": osc['COMPUTE']['Mom'], "value": ind['Mom']}
+            mom = {"rec": osc['COMPUTE']['STOCH.K'], "value": ind['STOCH.K']}
 
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
-            if recs.count("BUY") == 3:
+            if recs.count("BUY") == 2:
                 embed = discord.Embed(color=json_data['buy_color'])
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="Recommendation", value="{}".format("BUY"), inline=False)
