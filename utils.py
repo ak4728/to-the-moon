@@ -9,9 +9,6 @@ def get_market_exchange(ticker):
         if el['symbol'] == ticker.upper():
             if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX', "ARCA"]:
                 response = el
-            else:
-                response['exchange'] = "NA"
-    print(ticker, response['exchange'])
     if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA']:
         screener = "america"
     else:
