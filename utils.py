@@ -22,6 +22,7 @@ def get_market_exchange(ticker):
 def get_ticker_price(ticker):
     if "USD" in ticker.upper():
         ticker = ticker.upper().split("USD")[0]+"-USD"
-    print(ticker)
+    elif ticker.upper() == 'IXIC':
+        ticker = "%5EIXIC"
     r = requests.get(json_data['api_url'].format(ticker.upper()))
     return(r.json()['quoteResponse']['result'][0]['regularMarketPrice'])
