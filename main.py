@@ -22,7 +22,7 @@ with open('config.json') as json_file:
 
 hook = Webhook(json_data['webhook_url'])
 
-image = "https://nineplanets.org/wp-content/uploads/2019/09/moon.png"
+image = "https://discord.com/assets/748ff0e7b2f1f22adecad8463de25945.svg"
 user_agent = json_data['user_agent']
 selected = json_data['default_int']
 
