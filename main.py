@@ -175,16 +175,12 @@ async def on_message(message):
     if message.content.startswith('!sentiment '):
         try:
             stock = message.content.split('!sentiment ')[1].split(" ")[0]
-            if len(stock) <= 2:
-                dollar = False
-            else:
-                dollar = True
             tweets, pos, neg, neu = get_sentiment(stock, dollar=dollar)
             count = len(tweets['id'])
             pos_rate = pos / len(tweets['id'])
-            image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
+            tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
             embed = discord.Embed(color=1146986)
-            embed.set_thumbnail(url=image)
+            embed.set_thumbnail(url=tweet_image)
             embed.add_field(name="{} Tweets within the last hour".format(stock.upper()),
                             value='> Positive Tweets: {}\n> Negative Tweets: {}\n> Neutral Tweets: {}\n> Positivity Rate: {:2.2%}'.format(
                                 pos,

@@ -52,14 +52,14 @@ def get_sentiment(keyword="TSLA", dollar=True):
         keyword = keyword.rstrip("USDT")
     # Configuration
     tweets = pd.DataFrame(columns=['id', 'date', 'content'])
-    timenow = (datetime.now(timezone.utc) - timedelta(hours=8))
+    time_now = (datetime.now(timezone.utc) - timedelta(hours=8))
     analyzer = SentimentIntensityAnalyzer()
 
     # Tweets within the last hour
     for i, tweet in enumerate(sntwitter.TwitterSearchScraper(
-            keyword + ' lang:en since:2021-03-04 -filter:links -filter:replies').get_items()):
+            keyword + ' lang:en since:' + time_now.strftime("%Y-%m-%d") + ' -filter:replies').get_items()):
         date = (tweet.date - timedelta(hours=7))
-        if date < timenow:
+        if date < time_now:
             break
         tweets.loc[i] = [tweet.id, tweet.date, tweet.content]
 
