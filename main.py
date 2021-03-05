@@ -191,7 +191,7 @@ async def on_message(message):
             print("Exception in Sentiment {}".format(e))
         hook.send(embed=embed)
 
-@tasks.loop(seconds=1500.0)
+@tasks.loop(seconds=900.0)
 async def signalAlarm():
     await client.wait_until_ready()
     print("Loop started.")
