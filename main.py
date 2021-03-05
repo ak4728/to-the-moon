@@ -80,7 +80,6 @@ async def watchlist(ticker, fun="add"):
                     json.dump(data, f)
                 f.close()
     if fun == "remove":
-        screener, exchange = get_market_exchange(ticker)
         with open("watchlist.txt", "r") as f:
             data = json.load(f)
             f.close()
