@@ -175,7 +175,7 @@ async def on_message(message):
     if message.content.startswith('!sentiment '):
         try:
             stock = message.content.split('!sentiment ')[1].split(" ")[0]
-            tweets, pos, neg, neu = get_sentiment(stock, dollar=dollar)
+            tweets, pos, neg, neu = get_sentiment(stock, dollar=True)
             count = len(tweets['id'])
             pos_rate = pos / len(tweets['id'])
             tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
