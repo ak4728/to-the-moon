@@ -1,4 +1,6 @@
 # helper functions will go here
+import re
+import asyncpraw
 import requests, random, json
 import pandas as pd
 import snscrape.modules.twitter as sntwitter
@@ -93,3 +95,38 @@ def sentiment_response(stock="TSLA"):
                         pos_rate), inline=False)
     hook.send(embed=embed)
 
+async def get_reddit_stocks(sr_limit=100):
+    reddit = asyncpraw.Reddit(
+        client_id = json_data['client_id'],
+        client_secret = json_data['client_secret'],
+        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+    )
+
+    subreddit = await reddit.subreddit("wallstreetbets")
+
+    df = {}
+    async for submission in subreddit.hot(limit=sr_limit):
+        df[submission.title] = submission.selftext
+
+    regex = re.compile('[^a-zA-Z ]')
+    word_dict = {}
+
+    for (k, v) in df.items():
+        title = k
+        title = regex.sub('', title)
+        title_words = title.split(' ')
+        content = v
+        content = regex.sub('', content)
+        content_words = content.split(' ')
+        words = title_words + content_words
+        for x in words:
+            if x in ['A', 'B', 'GO', 'ARE', 'ON', 'IT', 'ALL', 'NEXT', 'PUMP', 'AT', 'NOW', 'FOR', 'TD', 'CEO', 'AM', 'K', 'BIG', 'BY', 'LOVE', 'CAN', 'BE', 'SO', 'OUT', 'STAY', 'OR', 'NEW','RH','EDIT','ONE','ANY']:
+                pass
+            elif x in word_dict:
+                word_dict[x] += 1
+            else:
+                word_dict[x] = 1
+    wordbag = pd.DataFrame.from_dict(list(word_dict.items())).rename(columns = {0:"Term", 1:"Frequency"})
+    tickers = pd.read_csv('tickers.csv').rename(columns = {"Symbol":"Term", "Name":"Company_Name"})
+    stocks = pd.merge(tickers, wordbag, on="Term").sort_values(by="Frequency", ascending = False, ignore_index = True).head(20)
+    return(stocks)
