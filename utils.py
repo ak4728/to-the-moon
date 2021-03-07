@@ -128,5 +128,5 @@ async def get_reddit_stocks(sr_limit=100):
                 word_dict[x] = 1
     wordbag = pd.DataFrame.from_dict(list(word_dict.items())).rename(columns = {0:"Term", 1:"Frequency"})
     tickers = pd.read_csv('tickers.csv').rename(columns = {"Symbol":"Term", "Name":"Company_Name"})
-    stocks = pd.merge(tickers, wordbag, on="Term").sort_values(by="Frequency", ascending = False, ignore_index = True).head(20)
+    stocks = pd.merge(tickers, wordbag, on="Term").sort_values(by="Frequency", ascending = False).head(20)
     return(stocks)
