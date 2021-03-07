@@ -192,22 +192,23 @@ async def on_message(message):
         hook.send(embed=embed)
 
     if message.content.startswith('!reddit'):
-        try:
+        async with message.channel.typing():
             try:
-                sr_limit = int(message.content.split('!reddit')[1].split(" ")[1])
-            except:
-                sr_limit = 100
-            df = await get_reddit_stocks(sr_limit)
-            reddit_image = "https://www.redditinc.com/assets/images/site/reddit-logo.png"
-            embed = discord.Embed(color=11027200)
-            embed.set_thumbnail(url=reddit_image)
-            text = ""
-            for x, y in df.iloc[0:10].iterrows():
-                text = text + "> {}:{} \n".format(y[0], y[2])
-            embed.add_field(name="Top Reddit Stocks - Limit:{}".format(sr_limit), value='{}'.format(text), inline=False)
-        except Exception as e:
-            print("Exception in Reddit {}".format(e))
-        hook.send(embed=embed)
+                try:
+                    sr_limit = int(message.content.split('!reddit')[1].split(" ")[1])
+                except:
+                    sr_limit = 100
+                df = await get_reddit_stocks(sr_limit)
+                reddit_image = "https://www.redditinc.com/assets/images/site/reddit-logo.png"
+                embed = discord.Embed(color=11027200)
+                embed.set_thumbnail(url=reddit_image)
+                text = ""
+                for x, y in df.iloc[0:10].iterrows():
+                    text = text + "> {}:{} \n".format(y[0], y[2])
+                embed.add_field(name="Top Reddit Stocks - Limit:{}".format(sr_limit), value='{}'.format(text), inline=False)
+            except Exception as e:
+                print("Exception in Reddit {}".format(e))
+            hook.send(embed=embed)
 
 
 @tasks.loop(seconds=900.0)
