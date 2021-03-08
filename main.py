@@ -108,39 +108,41 @@ async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener
 @client.event
 async def on_message(message):
     if message.content.startswith('!ticker '):
-        embed = discord.Embed(color=json_data['ticker_color'])
-        embed.set_thumbnail(url=image)
-        try:
-            ticker = message.content.split('!ticker')[1].split(" ")[1]
-            stock = await get_ticker(ticker, intervals[selected])
-            analyzed = stock.get_analysis()
-            embed.add_field(name="Stock", value="${}".format(analyzed.symbol.upper()), inline=False)
-            embed.add_field(name="Price", value="${}".format(get_ticker_price(ticker.upper())), inline=False)
-            embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']), inline=False)
-            embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
-            embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)
-            embed.add_field(name="Neutral", value="{}".format(analyzed.summary['NEUTRAL']), inline=True)
+        async with message.channel.typing():
+            await asyncio.sleep(0.1)
+            embed = discord.Embed(color=json_data['ticker_color'])
+            embed.set_thumbnail(url=image)
             try:
-                ma = message.content.split('!ticker')[1].split(" ")[2]
-                if ma == "ma":
-                    await get_ma_osc(embed, stock, "ma")
-                if ma == "osc":
-                    await get_ma_osc(embed, stock, "osc")
+                ticker = message.content.split('!ticker')[1].split(" ")[1]
+                stock = await get_ticker(ticker, intervals[selected])
+                analyzed = stock.get_analysis()
+                embed.add_field(name="Stock", value="${}".format(analyzed.symbol.upper()), inline=False)
+                embed.add_field(name="Price", value="${}".format(get_ticker_price(ticker.upper())), inline=False)
+                embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']), inline=False)
+                embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
+                embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)
+                embed.add_field(name="Neutral", value="{}".format(analyzed.summary['NEUTRAL']), inline=True)
+                try:
+                    ma = message.content.split('!ticker')[1].split(" ")[2]
+                    if ma == "ma":
+                        await get_ma_osc(embed, stock, "ma")
+                    if ma == "osc":
+                        await get_ma_osc(embed, stock, "osc")
+                except Exception as e:
+                    print("Exception in MA {}".format(e))
+                    pass
+                try:
+                    osc = message.content.split('!ticker')[1].split(" ")[3]
+                    if osc == "osc":
+                        await get_ma_osc(embed, stock, "osc")
+                except Exception as e:
+                    print("Exception in OSC {}".format(e))
+                    pass
             except Exception as e:
-                print("Exception in MA {}".format(e))
-                pass
-            try:
-                osc = message.content.split('!ticker')[1].split(" ")[3]
-                if osc == "osc":
-                    await get_ma_osc(embed, stock, "osc")
-            except Exception as e:
-                print("Exception in OSC {}".format(e))
-                pass
-        except Exception as e:
-            print("Try block exception Stock Rec: ", e)
-            embed.add_field(name="Exception", value="{}".format("Ticker not found."), inline=True)
+                print("Try block exception Stock Rec: ", e)
+                embed.add_field(name="Exception", value="{}".format("Ticker not found."), inline=True)
 
-        await message.channel.send(embed=embed)
+            await message.channel.send(embed=embed)
 
     if message.content.startswith('!watchlist '):
         embed = discord.Embed(color=json_data['watchlist_color'])
@@ -173,26 +175,29 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     if message.content.startswith('!sentiment '):
-        try:
-            stock = message.content.split('!sentiment ')[1].split(" ")[0]
-            tweets, pos, neg, neu = get_sentiment(stock, dollar=True)
-            count = len(tweets['id'])
-            pos_rate = pos / len(tweets['id'])
-            tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
-            embed = discord.Embed(color=1146986)
-            embed.set_thumbnail(url=tweet_image)
-            embed.add_field(name="{} Tweets within the last hour".format(stock.upper()),
-                            value='> Positive Tweets: {}\n> Negative Tweets: {}\n> Neutral Tweets: {}\n> Positivity Rate: {:2.2%}'.format(
-                                pos,
-                                neg,
-                                neu,
-                                pos_rate), inline=False)
-        except Exception as e:
-            print("Exception in Sentiment {}".format(e))
-        hook.send(embed=embed)
+        async with message.channel.typing():
+            await asyncio.sleep(0.1)
+            try:
+                stock = message.content.split('!sentiment ')[1].split(" ")[0]
+                tweets, pos, neg, neu = get_sentiment(stock, dollar=True)
+                count = len(tweets['id'])
+                pos_rate = pos / len(tweets['id'])
+                tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
+                embed = discord.Embed(color=1146986)
+                embed.set_thumbnail(url=tweet_image)
+                embed.add_field(name="{} Tweets within the last hour".format(stock.upper()),
+                                value='> Positive Tweets: {}\n> Negative Tweets: {}\n> Neutral Tweets: {}\n> Positivity Rate: {:2.2%}'.format(
+                                    pos,
+                                    neg,
+                                    neu,
+                                    pos_rate), inline=False)
+            except Exception as e:
+                print("Exception in Sentiment {}".format(e))
+            await message.channel.send(embed=embed)
 
     if message.content.startswith('!reddit'):
         async with message.channel.typing():
+            await asyncio.sleep(0.1)
             try:
                 try:
                     sr_limit = int(message.content.split('!reddit')[1].split(" ")[1])
@@ -208,7 +213,7 @@ async def on_message(message):
                 embed.add_field(name="Top Reddit Stocks - Limit:{}".format(sr_limit), value='{}'.format(text), inline=False)
             except Exception as e:
                 print("Exception in Reddit {}".format(e))
-            hook.send(embed=embed)
+            await message.channel.send(embed=embed)
 
 
 @tasks.loop(seconds=900.0)
