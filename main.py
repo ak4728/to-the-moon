@@ -3,7 +3,6 @@ import json, logging, requests
 
 import asyncio
 
-from discord.ext.commands import Bot
 from tradingview_ta import TA_Handler, Interval, Exchange
 from dhooks import Webhook
 from discord.ext import commands, tasks
