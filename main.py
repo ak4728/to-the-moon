@@ -111,14 +111,6 @@ class MarketCommands(commands.Cog):
     Functions regarding the market, ticker price, and indicators. [] = required, {} = optional"
     !ticker [stock_name] {indicator_name}
     """
-
-    @commands.command(
-        sa="Selam ulan nesini anlamadin?",
-        brief="Selamini alir.")
-    async def sa(self, ctx):
-        response = "Aleykum selam reyiz."
-        await ctx.channel.send(response)
-
     @commands.command(
         ticker="Retrieves indicators for a given stock or cryptocoin. [] = required, {} = optional",
         brief="Retrieves stock indicators. \n  !ticker [ixic] \n  !ticker ixic ma"
@@ -156,30 +148,31 @@ class MarketCommands(commands.Cog):
 
 class Configuration(commands.Cog):
     """
-    Configuration functions. [] = required, {} = optional
-    !interval [interval]
-        !interval 1-minute
+    Configuration functions.
+    [] = required, {} = optional
 
-    Intervals:
-        1-minute
-        5-minutes
-        15-minutes
-        1-hour
-        4-hours
-        1-day
-        1-week
-        1-month
+    !interval [interval]
+        > !interval 1-minute
 
     !watchlist {add/remove}
-        !watchlist
-        !watchlist add TSLA
-        !watchlist remove TSLA
-
+        > !watchlist
+        > !watchlist add TSLA
+        > !watchlist remove TSLA
     """
 
-    @commands.command()
+    @commands.command(
+        watchlist="Adds or removes a stock or shows the watchlist",
+        brief="Watchlist functions. \n  !watchlist \n  !watchlist add TSLA \n  !watchlist remove TSLA"
+    )
     async def watchlist(self, ctx, *args):
-        response = "Aleykum selam reyiz."
+        """
+        Bring the existing watchlist
+            !watchlist
+        Add a stock to the watchlist
+            !watchlist add TSLA
+        Remove a stock from the watchlist
+            !watchlist remove TSLA
+        """
         embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url="https://dl3.pushbulletusercontent.com/v3GAmZvD2FtVZ2SK9IY1YppLLZYoJuca/bookmark.png")
         if len(args) > 1:
@@ -196,8 +189,21 @@ class Configuration(commands.Cog):
                             value="{}".format(tickers), inline=True)
         await ctx.channel.send(embed=embed)
 
-    @commands.command()
+    @commands.command(
+        interval="Shows or changes the interval",
+        brief="Interval functions. \n  !interval \n  !interval 15-minutes"
+    )
     async def interval(self, ctx, *args):
+        """
+        Existing interval
+            !interval
+        Set interval
+            !interval 15-minutes
+        Intervals
+            1-minute, 5-minutes, 15-minutes, 1-hour,
+            4-hours, 1-day, 1-week, 1-month
+
+        """
         print(intervals[selected])
         embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url=image)
@@ -209,6 +215,33 @@ class Configuration(commands.Cog):
             embed.add_field(name="Existing interval.", value=intervals[selected], inline=True)
         await ctx.channel.send(embed=embed)
 
+
+class SocialMedia(commands.Cog):
+
+    @commands.command(
+        interval="Shows or changes the interval",
+        brief="Interval functions. \n  !interval \n  !interval 15-minutes"
+    )
+    async def sentiment(self, ctx, *args):
+        async with message.channel.typing():
+            await asyncio.sleep(0.1)
+            try:
+                stock = message.content.split('!sentiment ')[1].split(" ")[0]
+                tweets, pos, neg, neu = get_sentiment(stock, dollar=True)
+                count = len(tweets['id'])
+                pos_rate = pos / len(tweets['id'])
+                tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
+                embed = discord.Embed(color=1146986)
+                embed.set_thumbnail(url=tweet_image)
+                embed.add_field(name="{} Tweets within the last hour".format(stock.upper()),
+                                value='> Positive Tweets: {}\n> Negative Tweets: {}\n> Neutral Tweets: {}\n> Positivity Rate: {:2.2%}'.format(
+                                    pos,
+                                    neg,
+                                    neu,
+                                    pos_rate), inline=False)
+            except Exception as e:
+                print("Exception in Sentiment {}".format(e))
+            await message.channel.send(embed=embed)
 
 @tasks.loop(seconds=900.0)
 async def signalAlarm():
