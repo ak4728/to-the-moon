@@ -6,9 +6,12 @@
 - Python 3.6 and up - https://www.python.org/downloads/
 - git - https://git-scm.com/download/
 
-## Useful to always have
-Keep [this](https://discordpy.readthedocs.io/en/latest/) saved somewhere, as this is the docs to discord.py@rewrite.
-All you need to know about the library is defined inside here, even code that I don't use in this example is here.
+## Command List
+!ticker
+!interval
+!watchlist
+!sentiment
+!reddit
 
 ## How to setup
 1. Make a bot [here](https://discordapp.com/developers/applications/me) and grab the token
