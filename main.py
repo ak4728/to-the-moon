@@ -7,8 +7,8 @@ from discord.ext.commands import Bot
 from tradingview_ta import TA_Handler, Interval, Exchange
 from dhooks import Webhook
 from discord.ext import commands, tasks
-from itertools import cycle
 from utils import *
+from pretty_help import PrettyHelp
 
 # Configuration
 logger = logging.getLogger('discord')
@@ -16,6 +16,7 @@ logger.setLevel(logging.ERROR)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+# bot = commands.Bot(command_prefix='!')
 
 with open('config.json') as json_file:
     json_data = json.load(json_file)
@@ -36,7 +37,7 @@ intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
              "1-month": Interval.INTERVAL_1_MONTH,
              }
 
-client = discord.Client()
+client = commands.Bot(command_prefix="!", help_command=PrettyHelp())  # discord.Client()
 
 
 async def get_ma_osc(embed, stock, method='ma'):
@@ -90,7 +91,7 @@ async def watchlist(ticker, fun="add"):
                 f.close()
 
 
-async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener = None, exc = None):
+async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener=None, exc=None):
     if screener == None and exc == None:
         screener, exc = get_market_exchange(ticker)
     try:
@@ -105,115 +106,108 @@ async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener
     return (stock)
 
 
-@client.event
-async def on_message(message):
-    if message.content.startswith('!ticker '):
-        async with message.channel.typing():
-            await asyncio.sleep(0.1)
+class MarketCommands(commands.Cog):
+    """
+    Functions regarding the market, ticker price, and indicators. [] = required, {} = optional"
+    !ticker [stock_name] {indicator_name}
+    """
+
+    @commands.command(
+        sa="Selam ulan nesini anlamadin?",
+        brief="Selamini alir.")
+    async def sa(self, ctx):
+        response = "Aleykum selam reyiz."
+        await ctx.channel.send(response)
+
+    @commands.command(
+        ticker="Retrieves indicators for a given stock or cryptocoin. [] = required, {} = optional",
+        brief="Retrieves stock indicators. \n  !ticker [ixic] \n  !ticker ixic ma"
+    )
+    async def ticker(self, ctx, *args):
+        async with ctx.channel.typing():
+            await asyncio.sleep(0.01)
             embed = discord.Embed(color=json_data['ticker_color'])
-            embed.set_thumbnail(url=image)
+            embed.set_thumbnail(url="https://cdn2.iconfinder.com/data/icons/mix-color-5/100/Mix_color_5__info-512.png")
             try:
-                ticker = message.content.split('!ticker')[1].split(" ")[1]
-                stock = await get_ticker(ticker, intervals[selected])
+                ticker_name = args[0]
+                stock = await get_ticker(ticker_name, intervals[selected])
                 analyzed = stock.get_analysis()
                 embed.add_field(name="Stock", value="${}".format(analyzed.symbol.upper()), inline=False)
-                embed.add_field(name="Price", value="${}".format(get_ticker_price(ticker.upper())), inline=False)
-                embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']), inline=False)
+                embed.add_field(name="Price", value="${}".format(get_ticker_price(ticker_name.upper())), inline=False)
+                embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']),
+                                inline=False)
                 embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
                 embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)
                 embed.add_field(name="Neutral", value="{}".format(analyzed.summary['NEUTRAL']), inline=True)
-                try:
-                    ma = message.content.split('!ticker')[1].split(" ")[2]
-                    if ma == "ma":
+                if len(args) > 1:
+                    if args[1] == "ma":
                         await get_ma_osc(embed, stock, "ma")
-                    if ma == "osc":
+                    if args[1] == "osc":
                         await get_ma_osc(embed, stock, "osc")
-                except Exception as e:
-                    print("Exception in MA {}".format(e))
-                    pass
-                try:
-                    osc = message.content.split('!ticker')[1].split(" ")[3]
-                    if osc == "osc":
-                        await get_ma_osc(embed, stock, "osc")
-                except Exception as e:
-                    print("Exception in OSC {}".format(e))
-                    pass
             except Exception as e:
-                print("Try block exception Stock Rec: ", e)
-                embed.add_field(name="Exception", value="{}".format("Ticker not found."), inline=True)
+                print(e)
+                embed.add_field(name="Missing Arguments",
+                                value="\n > !ticker [ticker_name] [indicator_name] \n > !ticker ixic \n > !ticker ixic osc",
+                                inline=True)
+                embed.set_footer(text="Indicator names, Oscillators/Moving Averages, [osc, ma] are optional. ")
 
-            await message.channel.send(embed=embed)
+        await ctx.channel.send(embed=embed)
 
-    if message.content.startswith('!watchlist '):
+
+class Configuration(commands.Cog):
+    """
+    Configuration functions. [] = required, {} = optional
+    !interval [interval]
+        !interval 1-minute
+
+    Intervals:
+        1-minute
+        5-minutes
+        15-minutes
+        1-hour
+        4-hours
+        1-day
+        1-week
+        1-month
+
+    !watchlist {add/remove}
+        !watchlist
+        !watchlist add TSLA
+        !watchlist remove TSLA
+
+    """
+
+    @commands.command()
+    async def watchlist(self, ctx, *args):
+        response = "Aleykum selam reyiz."
         embed = discord.Embed(color=json_data['watchlist_color'])
-        embed.set_thumbnail(url=image)
-        try:
-            fun = message.content.split('!watchlist ')[1].split(" ")[0]
-            stock = message.content.split('!watchlist ')[1].split(" ")[1]
+        embed.set_thumbnail(url="./images/watchlist.txt")
+        if len(args) > 1:
+            fun = args[0]
+            stock = args[1]
             embed.add_field(name="Watchlist is updated. Function: {}.".format(fun.upper()),
                             value="${}".format(stock.upper()), inline=True)
             await watchlist(str(stock), str(fun))
-        except Exception as e:
-            print("Exception in Watchlist {}".format(e))
-        await message.channel.send(embed=embed)
+        else:
+            with open("watchlist.txt", "r") as f:
+                tickers = list(json.load(f).keys())
+            f.close()
+            embed.add_field(name="Watchlist",
+                            value="{}".format(tickers), inline=True)
+        await ctx.channel.send(embed=embed)
 
-    if message.content.startswith('!watchlist'):
-        embed = discord.Embed(color=json_data['watchlist_color'])
-        embed.set_thumbnail(url=image)
-        with open("watchlist.txt", "r") as f:
-            tickers = list(json.load(f).keys())
-        f.close()
-        await message.channel.send(tickers)
-
-    if message.content.startswith('!interval '):
+    @commands.command()
+    async def interval(self, ctx, *args):
         print(intervals[selected])
         embed = discord.Embed(color=json_data['watchlist_color'])
         embed.set_thumbnail(url=image)
-        globals()['selected'] = message.content.split('!interval ')[1].split(" ")[0]
-        embed.add_field(name="Interval setting is updated.", value=intervals[selected], inline=True)
-        print(intervals[selected])
-        await message.channel.send(embed=embed)
-
-    if message.content.startswith('!sentiment '):
-        async with message.channel.typing():
-            await asyncio.sleep(0.1)
-            try:
-                stock = message.content.split('!sentiment ')[1].split(" ")[0]
-                tweets, pos, neg, neu = get_sentiment(stock, dollar=True)
-                count = len(tweets['id'])
-                pos_rate = pos / len(tweets['id'])
-                tweet_image = "https://www.shareicon.net/data/512x512/2015/09/04/95557_twitter_512x512.png"
-                embed = discord.Embed(color=1146986)
-                embed.set_thumbnail(url=tweet_image)
-                embed.add_field(name="{} Tweets within the last hour".format(stock.upper()),
-                                value='> Positive Tweets: {}\n> Negative Tweets: {}\n> Neutral Tweets: {}\n> Positivity Rate: {:2.2%}'.format(
-                                    pos,
-                                    neg,
-                                    neu,
-                                    pos_rate), inline=False)
-            except Exception as e:
-                print("Exception in Sentiment {}".format(e))
-            await message.channel.send(embed=embed)
-
-    if message.content.startswith('!reddit'):
-        async with message.channel.typing():
-            await asyncio.sleep(0.1)
-            try:
-                try:
-                    sr_limit = int(message.content.split('!reddit')[1].split(" ")[1])
-                except:
-                    sr_limit = 100
-                df = await get_reddit_stocks(sr_limit)
-                reddit_image = "https://www.redditinc.com/assets/images/site/reddit-logo.png"
-                embed = discord.Embed(color=11027200)
-                embed.set_thumbnail(url=reddit_image)
-                text = ""
-                for x, y in df.iloc[0:10].iterrows():
-                    text = text + "> {}:{} \n".format(y[0], y[2])
-                embed.add_field(name="Top Reddit Stocks - Limit:{}".format(sr_limit), value='{}'.format(text), inline=False)
-            except Exception as e:
-                print("Exception in Reddit {}".format(e))
-            await message.channel.send(embed=embed)
+        try:
+            globals()['selected'] = args[0]
+            embed.add_field(name="Interval setting is updated.", value=intervals[selected], inline=True)
+            print(intervals[selected])
+        except:
+            embed.add_field(name="Existing interval.", value=intervals[selected], inline=True)
+        await ctx.channel.send(embed=embed)
 
 
 @tasks.loop(seconds=900.0)
@@ -279,5 +273,7 @@ async def on_ready():
     print('{} Logged In!'.format(client.user.name))
 
 
+client.add_cog(MarketCommands())
+client.add_cog(Configuration())
 signalAlarm.start()
 client.run(json_data['discord_token'])
