@@ -181,7 +181,7 @@ class Configuration(commands.Cog):
     async def watchlist(self, ctx, *args):
         response = "Aleykum selam reyiz."
         embed = discord.Embed(color=json_data['watchlist_color'])
-        embed.set_thumbnail(url="./images/watchlist.txt")
+        embed.set_thumbnail(url="https://dl3.pushbulletusercontent.com/v3GAmZvD2FtVZ2SK9IY1YppLLZYoJuca/bookmark.png")
         if len(args) > 1:
             fun = args[0]
             stock = args[1]
