@@ -15,8 +15,8 @@ def get_market_exchange(ticker):
     r = requests.get(json_data['symbol_url'].format(ticker))
     for el in r.json():
         if el['symbol'] == ticker.upper():
+            print(el['exchange'])
             if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX', "NYSE ARCA & MKT"]:
-                response = el
                 if el['exchange'] == "NYSE ARCA & MKT":
                     response['exchange'] = "AMEX"
     if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA',"AMEX"]:
@@ -26,7 +26,7 @@ def get_market_exchange(ticker):
     return(screener, response['exchange'])
 
 
-def get_ticker_price(ticker):
+async def get_ticker_price(ticker):
     if "USD" in ticker.upper():
         ticker = ticker.upper().split("USD")[0]+"-USD"
     elif ticker.upper() == 'IXIC':

@@ -306,7 +306,7 @@ async def signalAlarm():
             analyzed = stock.get_analysis()
             ind = analyzed.indicators
             osc = analyzed.oscillators
-            price = await get_ticker_price(ticker_name.upper())
+            price = await get_ticker_price(ticker.upper())
             rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
 
             if rsi['value'] < 50:
@@ -322,7 +322,7 @@ async def signalAlarm():
             if recs.count("BUY") == 3:
                 embed = discord.Embed(color=json_data['buy_color'])
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
-                embed.add_field(name="{}".format("BUY"), value="{``````}".format(ticker), inline=False)
+                embed.add_field(name="{}".format("BUY"), value="```{}```".format(ticker), inline=False)
                 embed.add_field(name="Price", value="${}".format(price), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
@@ -332,7 +332,7 @@ async def signalAlarm():
             if recs.count("SELL") == 3:
                 embed = discord.Embed(color=json_data['sell_color'])
                 embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
-                embed.add_field(name="{}".format("SELL"), value="{``````}".format(ticker), inline=False)
+                embed.add_field(name="{}".format("SELL"), value="```{}```".format(ticker), inline=False)
                 embed.add_field(name="Price", value="${}".format(price), inline=False)
                 embed.add_field(name="RSI", value="{}".format(rsi['value']), inline=True)
                 embed.add_field(name="MACD", value="{}".format(macd['value']), inline=True)
