@@ -3,13 +3,29 @@ import re
 import asyncpraw
 import requests, random, json
 import pandas as pd
+import asyncio
 import snscrape.modules.twitter as sntwitter
 from datetime import datetime, timedelta, timezone
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
+from tradingview_ta import TA_Handler, Interval, Exchange
 
 with open('config.json') as json_file:
     json_data = json.load(json_file)
+
+
+async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener=None, exc=None):
+    if screener == None and exc == None:
+        screener, exc = get_market_exchange(ticker)
+    try:
+        stock = TA_Handler(
+            symbol=ticker,
+            screener=screener,
+            exchange=exc,
+            interval=interval
+        )
+    except Exception as e:
+        print(ticker, exc, screener, e)
+    return (stock)
 
 def get_market_exchange(ticker):
     r = requests.get(json_data['symbol_url'].format(ticker))
