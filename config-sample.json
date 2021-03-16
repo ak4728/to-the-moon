@@ -6,9 +6,12 @@
 	"sell_color": 7419530,
 	"watchlist_color": 3447003,
 	"ticker_color": 4500277,
-	"image" :"https://nineplanets.org/wp-content/uploads/2019/09/moon.png",
-	"webhook_url" : "https://discordapp.com/api/webhooks/807142910453088296/ds0Zz9RTKL5F_CehGVEgp6gQS6lkAxt6dCDRCFdrNo6rWZlzDzg0lz6QkAwgBaD06Olj",
+	"image" :"https://discord.com/assets/748ff0e7b2f1f22adecad8463de25945.svg",
+	"interval_image" :"https://dl3.pushbulletusercontent.com/I10NYv51YYFKM4wgNgP0ZmiBjpxoo3jH/Icon-1.png",
+	"webhook_url" : "",
 	"default_int" :"4-hours",
 	"api_url": "https://query1.finance.yahoo.com/v7/finance/quote?&symbols={}&fields=regularMarketPrice",
-	"symbol_url":"https://symbol-search.tradingview.com/symbol_search/?text={}"
+	"symbol_url":"https://symbol-search.tradingview.com/symbol_search/?text={}",
+	"client_id":"",
+	"client_secret":""
 }
