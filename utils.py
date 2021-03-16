@@ -13,17 +13,20 @@ with open('config.json') as json_file:
 
 def get_market_exchange(ticker):
     r = requests.get(json_data['symbol_url'].format(ticker))
+    response = {}
     for el in r.json():
         if el['symbol'] == ticker.upper():
-            print(el['exchange'])
             if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX', "NYSE ARCA & MKT"]:
                 if el['exchange'] == "NYSE ARCA & MKT":
-                    response['exchange'] = "AMEX"
-    if response['exchange'] in ['NYSE', 'NASDAQ', 'ARCA',"AMEX"]:
+                    print(el['exchange'])
+                    exchange = "AMEX"
+                else:
+                    exchange = el['exchange']
+    if exchange in ['NYSE', 'NASDAQ', 'ARCA',"AMEX"]:
         screener = "america"
     else:
         screener = "crypto"
-    return(screener, response['exchange'])
+    return(screener, exchange)
 
 
 async def get_ticker_price(ticker):

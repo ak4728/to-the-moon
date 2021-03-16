@@ -39,29 +39,46 @@ intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
 client = commands.Bot(command_prefix="!", help_command=PrettyHelp())  # discord.Client()
 
 
+async def color_text(recommendation):
+    if "BUY" in recommendation:
+        rec_text = """```diff\n+{}```""".format(recommendation)
+    elif "SELL" in recommendation:
+        rec_text = """```diff\n-{}```""".format(recommendation)
+    else:
+        rec_text = """```fix\n{}```""".format(recommendation)
+    return rec_text
+
+
+
 async def get_ma_osc(embed, stock, method='ma'):
     method = method
     analyzed = stock.get_analysis()
+    text = "```"
     if method == 'ma':
         d = analyzed.moving_averages
         for k, v in d.items():
             if k == "RECOMMENDATION":
+
                 embed.add_field(name="Moving Avgs Recommendation",
-                                value='{}'.format(d['RECOMMENDATION']), inline=False)
+                                value='{}'.format(await color_text(d['RECOMMENDATION'])), inline=False)
             if k == "COMPUTE":
                 compute = d['COMPUTE']
                 for x, y in compute.items():
-                    embed.add_field(name=str(x), value="{}".format(y), inline=True)
+                    text = text + str(x) + " : " + str(y) + "\n"
+                text = text + "```"
+                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
     if method == 'osc':
         d = analyzed.oscillators
         for k, v in d.items():
             if k == "RECOMMENDATION":
                 embed.add_field(name="Oscillators Recommendation",
-                                value="{}".format(d['RECOMMENDATION']), inline=False)
+                                value="{}".format(await color_text(d['RECOMMENDATION'])), inline=False)
             if k == "COMPUTE":
                 compute = d['COMPUTE']
                 for x, y in compute.items():
-                    embed.add_field(name=str(x), value="{}".format(y), inline=True)
+                    text = text + str(x) + " : " + str(y) + "\n"
+                text = text + "```"
+                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
 
 
 async def watchlist(ticker, fun="add"):
@@ -128,21 +145,33 @@ class MarketCommands(commands.Cog):
                 embed.set_footer(text="Indicator names, Oscillators/Moving Averages, [osc, ma] are optional. ")
             else:
                 embed.set_thumbnail(url=json_data['image'])
-                for arg in args:
+                args_list = [x.upper() for x in args]
+                moving_avgs = False
+                oscillators = False
+                if "MA" in args_list[-2:]:
+                    args_list.remove("MA")
+                    moving_avgs = True
+                if "OSC" in args_list[-2:]:
+                    args_list.remove("OSC")
+                    oscillators = True
+                for arg in args_list:
                     ticker_name = arg
                     stock = await get_ticker(ticker_name, intervals[selected])
-                    price = await get_ticker_price(ticker_name.upper())
+                    price = await get_ticker_price(ticker_name)
                     analyzed = stock.get_analysis()
-                    embed.add_field(name="```${}```".format(analyzed.symbol.upper()), value="${}".format(price), inline=False)
-                    embed.add_field(name="Recommendation", value="{}".format(analyzed.summary['RECOMMENDATION']),
-                                    inline=False)
-                    embed.add_field(name="Buy", value="{}".format(analyzed.summary['BUY']), inline=True)
-                    embed.add_field(name="Sell", value="{}".format(analyzed.summary['SELL']), inline=True)
-                    embed.add_field(name="Neutral", value="{}".format(analyzed.summary['NEUTRAL']), inline=True)
-                    if args[-1] == "ma":
+                    embed.add_field(name="```[${}]```".format(analyzed.symbol), value="{}".format(await color_text(analyzed.summary['RECOMMENDATION'] + " : $" + str(price))), inline=False)
+                    embed.add_field(name="Buy/Sell/Neutral", value="```{}/{}/{}```".format(analyzed.summary['BUY'], analyzed.summary['SELL'],analyzed.summary['NEUTRAL']), inline=True)
+                    if moving_avgs == True:
                         await get_ma_osc(embed, stock, "ma")
-                    if args[-1] == "osc":
+                        if oscillators == True:
+                            await get_ma_osc(embed, stock, "osc")
+                        print('ma')
+                    elif oscillators == True:
                         await get_ma_osc(embed, stock, "osc")
+                        if moving_avgs == True:
+                            await get_ma_osc(embed, stock, "ma")
+                        print('osc')
+
         await ctx.channel.send(embed=embed)
 
 
