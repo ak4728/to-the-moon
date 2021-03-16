@@ -1,5 +1,5 @@
 import discord
-import json, logging, requests, os
+import logging
 
 from dhooks import Webhook
 from discord.ext import commands, tasks
@@ -11,6 +11,8 @@ from cogs.market import MarketCommands
 from cogs.config import Configuration
 from cogs.social_media import SocialMedia
 
+with open('config.json') as json_file:
+    json_data = json.load(json_file)
 
 # Configuration
 logger = logging.getLogger('discord')
@@ -18,22 +20,12 @@ logger.setLevel(logging.ERROR)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-# bot = commands.Bot(command_prefix='!')
-
-with open('config.json') as json_file:
-    json_data = json.load(json_file)
-
 hook = Webhook(json_data['webhook_url'])
-
-
 user_agent = json_data['user_agent']
-
-
 client = commands.Bot(command_prefix="!", help_command=PrettyHelp())  # discord.Client()
 
-
 @tasks.loop(seconds=900.0)
-async def signalAlarm():
+async def signal_alarm():
     await client.wait_until_ready()
     print("Loop started.")
 
@@ -85,8 +77,8 @@ async def signalAlarm():
             pass
 
 
-@signalAlarm.before_loop
-async def signalAlarm_before():
+@signal_alarm.before_loop
+async def signal_alarm_before():
     await client.wait_until_ready()
 
 @client.event
@@ -98,5 +90,5 @@ client.add_cog(MarketCommands())
 client.add_cog(Configuration())
 client.add_cog(SocialMedia())
 
-signalAlarm.start()
+signal_alarm.start()
 client.run(json_data['discord_token'])
