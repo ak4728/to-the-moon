@@ -2,6 +2,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from utils import *
+from tradingview_ta import TA_Handler, Interval, Exchange
 
 class Configuration(commands.Cog):
     """
@@ -64,7 +65,7 @@ class Configuration(commands.Cog):
         """
         print(intervals[selected])
         embed = discord.Embed(color=json_data['watchlist_color'])
-        embed.set_thumbnail(url=image)
+        embed.set_thumbnail(url=json_data['interval_image'])
         try:
             globals()['selected'] = args[0]
             embed.add_field(name="Interval setting is updated.", value=intervals[selected], inline=True)

@@ -12,6 +12,87 @@ from tradingview_ta import TA_Handler, Interval, Exchange
 with open('config.json') as json_file:
     json_data = json.load(json_file)
 
+selected = json_data['default_int']
+
+intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
+             "5-minutes": Interval.INTERVAL_5_MINUTES,
+             "15-minutes": Interval.INTERVAL_15_MINUTES,
+             "1-hour": Interval.INTERVAL_1_HOUR,
+             "4-hours": Interval.INTERVAL_4_HOURS,
+             "1-day": Interval.INTERVAL_1_DAY,
+             "1-week": Interval.INTERVAL_1_WEEK,
+             "1-month": Interval.INTERVAL_1_MONTH,
+        }
+
+
+
+async def color_text(recommendation):
+    if "BUY" in recommendation:
+        rec_text = """```diff\n+{}```""".format(recommendation)
+    elif "SELL" in recommendation:
+        rec_text = """```diff\n-{}```""".format(recommendation)
+    else:
+        rec_text = """```fix\n{}```""".format(recommendation)
+    return rec_text
+
+
+
+async def get_ma_osc(embed, stock, method='ma'):
+    method = method
+    analyzed = stock.get_analysis()
+    text = "```"
+    if method == 'ma':
+        d = analyzed.moving_averages
+        for k, v in d.items():
+            if k == "RECOMMENDATION":
+
+                embed.add_field(name="Moving Avgs Recommendation",
+                                value='{}'.format(await color_text(d['RECOMMENDATION'])), inline=False)
+            if k == "COMPUTE":
+                compute = d['COMPUTE']
+                for x, y in compute.items():
+                    text = text + str(x) + " : " + str(y) + "\n"
+                text = text + "```"
+                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
+    if method == 'osc':
+        d = analyzed.oscillators
+        for k, v in d.items():
+            if k == "RECOMMENDATION":
+                embed.add_field(name="Oscillators Recommendation",
+                                value="{}".format(await color_text(d['RECOMMENDATION'])), inline=False)
+            if k == "COMPUTE":
+                compute = d['COMPUTE']
+                for x, y in compute.items():
+                    text = text + str(x) + " : " + str(y) + "\n"
+                text = text + "```"
+                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
+
+
+async def watchlist(ticker, fun="add"):
+    '''
+    Adds/removes the stock to the watchlist dictionary
+    E.g. watchlist("TSLA", "add")
+    '''
+    if fun == "add":
+        screener, exchange = get_market_exchange(ticker)
+        with open("watchlist.txt", "r") as f:
+            data = json.load(f)
+            f.close()
+            if ticker.upper() not in list(data.keys()):
+                with open("watchlist.txt", "w") as f:
+                    data[ticker.upper()] = {"screener": screener, "exchange": exchange}
+                    json.dump(data, f)
+                f.close()
+    if fun == "remove":
+        with open("watchlist.txt", "r") as f:
+            data = json.load(f)
+            f.close()
+            if ticker.upper() in list(data.keys()):
+                with open("watchlist.txt", "w") as f:
+                    data.pop(ticker.upper(), None)
+                    json.dump(data, f)
+                f.close()
+
 
 async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener=None, exc=None):
     if screener == None and exc == None:

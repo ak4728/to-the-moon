@@ -2,6 +2,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from utils import *
+from tradingview_ta import TA_Handler, Interval, Exchange
 
 
 class MarketCommands(commands.Cog):
