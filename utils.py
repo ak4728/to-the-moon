@@ -131,7 +131,10 @@ async def get_ticker_price(ticker):
         ticker = ticker.upper().split("USD")[0]+"-USD"
     elif ticker.upper() == 'IXIC':
         ticker = "%5EIXIC"
-    r = requests.get(json_data['api_url'].format(ticker.upper()))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+    r = requests.get(json_data['api_url'].format(ticker.upper()), headers=headers)
+    x = r.json()
     return(r.json()['quoteResponse']['result'][0]['regularMarketPrice'])
 
 
