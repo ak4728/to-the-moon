@@ -42,7 +42,6 @@ async def signal_alarm():
             osc = analyzed.oscillators
             price = await get_ticker_price(ticker.upper())
             rsi = {"rec": osc['COMPUTE']['RSI'], "value": ind['RSI']}
-
             if rsi['value'] < 50:
                 rsi['rec'] = 'BUY'
             else:
@@ -54,6 +53,7 @@ async def signal_alarm():
             recs = [rsi['rec'], macd['rec'], mom['rec']]
 
             if recs.count("BUY") == 3:
+                print('yes')
                 embed = discord.Embed(color=json_data['buy_color'])
                 embed.set_thumbnail(url="https://reveregolf.com/wp-content/uploads/2019/10/Thumbs-Up-icon-2.png")
                 embed.add_field(name="{}".format("BUY"), value="```{}```".format(ticker), inline=False)
@@ -64,6 +64,7 @@ async def signal_alarm():
                 hook.send(embed=embed)
 
             if recs.count("SELL") == 3:
+                print('no')
                 embed = discord.Embed(color=json_data['sell_color'])
                 embed.set_thumbnail(url="https://hotemoji.com/images/dl/r/money-with-wings-emoji-by-google.png")
                 embed.add_field(name="{}".format("SELL"), value="```{}```".format(ticker), inline=False)
