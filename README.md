@@ -2,6 +2,8 @@
   <img alt="to-the-moon.py" src="https://dl3.pushbulletusercontent.com/25CJDZ1FmLHTYh6e1AHLtaCLLzzWO70S/Untitled-1.png" width="750px">
 </p>
 
+Stock market watch bot for discord. Written in Python.
+
 ## Requirements
 - Python 3.6 and up - https://www.python.org/downloads/
 - git - https://git-scm.com/download/
