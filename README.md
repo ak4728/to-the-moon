@@ -8,11 +8,17 @@
 
 ## Command List
 !ticker
+
 !interval
+
 !watchlist
+
 !sentiment
+
 !reddit
+
 !trades
+
 !help
 
 ## How to setup
