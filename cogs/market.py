@@ -72,7 +72,7 @@ class MarketCommands(commands.Cog):
     async def trades(self, ctx, *args):
         """
         Latest ARK trades. default symbol: ARKK, period:1d
-        !reddit 100
+        !trades ARKK
         """
         embed = discord.Embed(color=3426654)
         async with ctx.channel.typing():
