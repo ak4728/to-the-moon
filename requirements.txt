@@ -1,0 +1,10 @@
+dhooks~=1.1.3
+discord.ext
+pretty_help
+discord~=1.0.1
+asyncio~=3.4.3
+asyncpraw~=7.2.0
+requests~=2.25.1
+pandas~=1.3.0
+snscrape~=0.3.4
+vadersentiment~=3.3.2
