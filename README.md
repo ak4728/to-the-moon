@@ -15,11 +15,10 @@
 
 ## How to setup
 1. Make a bot [here](https://discordapp.com/developers/applications/me) and grab the token
-![Image_Example1](https://i.alexflipnote.dev/f9668b.png)
 
 2. Rename the file **config.json.example** to **config.json**, then fill in the required spots, such as token, prefix and game
 
-3. To install what you need, do **pip install -r requirements.txt**<br>
+3. To install what you need, do **pip install -r requirements.txt**<br> #TODO
 (If that doesn't work, do **python -m pip install -r requirements.txt**)<br>
 `NOTE: Use pip install with Administrator/sudo`
 
@@ -28,16 +27,3 @@
 5. You're done, enjoy your bot!
 
 
-### Docker
-Well, we need to find a way to write a docker file with auto-reboot functions.
-```
-# Build and run the Dockerfile
-docker-compose up -d --build
-
-# Tips on common commands
-docker-compose <command>
-  ps      Check if bot is online or not (list)
-  down    Shut down the bot
-  reboot  Reboot the bot without shutting it down or rebuilding
-  logs    Check the logs made by the bot.
-```
