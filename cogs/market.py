@@ -78,23 +78,30 @@ class MarketCommands(commands.Cog):
         async with ctx.channel.typing():
             await asyncio.sleep(0.01)
             if len(args) == 0:
-                embed.add_field(name="Missing Arguments",
-                                value="```!trades [ARK name] \n!trades ARKK```",
+                embed.add_field(name="Missing Arguments.",
+                                value="```!trades [ARK symbol] \n!trades ARKK```",
                                 inline=True)
                 msg_image = "https://cdn2.iconfinder.com/data/icons/mix-color-5/100/Mix_color_5__info-512.png"
             else:
-                msg_image = "https://upload.wikimedia.org/wikipedia/en/thumb/c/c1/Ark-logo-1-1.svg/1200px-Ark-logo-1-1.svg.png"
-            for arg in args:
-                symbol = arg
-                r = requests.get(json_data['ark_url'].format(symbol, '1d'))
-                text = ""
-                for el in r.json()['trades']:
-                    if el['direction'] == 'Buy':
-                        text += "{} bought {} shares of {} \n".format(symbol, el['shares'], el['ticker'])
+                for arg in args:
+                    symbol = arg.upper()
+                    if symbol in ["ARKK", "ARKQ", "ARKF", "ARKW"]:
+                        msg_image = "https://upload.wikimedia.org/wikipedia/en/thumb/c/c1/Ark-logo-1-1.svg/1200px-Ark-logo-1-1.svg.png"
+                        r = requests.get(json_data['ark_url'].format(symbol, '1d'))
+                        text = ""
+                        for el in r.json()['trades']:
+                            if el['direction'] == 'Buy':
+                                text += "{} bought {} shares of {} \n".format(symbol, el['shares'], el['ticker'])
+                            else:
+                                text += "{} sold {} shares of {}\n".format(symbol, el['shares'], el['ticker'])
+                        embed.set_thumbnail(url=msg_image)
+                        embed.add_field(name="Latest {} Trades within {}".format(symbol, '1d'), value='{}'.format(text),
+                                        inline=False)
                     else:
-                        text += "{} sold {} shares of {}\n".format(symbol, el['shares'], el['ticker'])
-                embed.set_thumbnail(url=msg_image)
-                embed.add_field(name="Latest {} Trades within {}".format(symbol, '1d'), value='{}'.format(text),
-                                    inline=False)
+                        embed.add_field(name="Wrong symbol. Please use one or more of ARKK, ARKQ, ARKF, or ARKW",
+                                        value="```!trades [ARK name] \n!trades ARKK```",
+                                        inline=True)
+                        msg_image = "https://cdn2.iconfinder.com/data/icons/mix-color-5/100/Mix_color_5__info-512.png"
+
 
         await ctx.channel.send(embed=embed)
