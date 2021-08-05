@@ -7,19 +7,7 @@
 - git - https://git-scm.com/download/
 
 ## Command List
-!ticker
-
-!interval
-
-!watchlist
-
-!sentiment
-
-!reddit
-
-!trades
-
-!help
+![image](https://user-images.githubusercontent.com/5445968/128292062-26fcce26-ca2a-46fd-ac01-e55774921472.png)
 
 ## How to setup
 1. Make a bot [here](https://discordapp.com/developers/applications/me) and grab the token
