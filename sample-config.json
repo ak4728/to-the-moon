@@ -12,6 +12,7 @@
 	"default_int" :"4-hours",
 	"api_url": "https://query1.finance.yahoo.com/v7/finance/quote?&symbols={}&fields=regularMarketPrice",
 	"symbol_url":"https://symbol-search.tradingview.com/symbol_search/?text={}",
+	"ark_url":"https://arkfunds.io/api/v1/etf/trades?symbol={}&period={}",
 	"client_id":"",
 	"client_secret":""
 }
