@@ -31,6 +31,10 @@ async def color_text(recommendation):
         rec_text = """```diff\n+{}```""".format(recommendation)
     elif "SELL" in recommendation:
         rec_text = """```diff\n-{}```""".format(recommendation)
+    elif "BOUGHT" in recommendation.upper():
+        rec_text = """```diff\n+{}```""".format("Bought")
+    elif "SOLD" in recommendation.upper():
+        rec_text = """```diff\n-{}```""".format("Sold")
     else:
         rec_text = """```fix\n{}```""".format(recommendation)
     return rec_text

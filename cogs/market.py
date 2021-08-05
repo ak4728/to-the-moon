@@ -88,14 +88,21 @@ class MarketCommands(commands.Cog):
                     if symbol in ["ARKK", "ARKQ", "ARKF", "ARKW"]:
                         msg_image = "https://upload.wikimedia.org/wikipedia/en/thumb/c/c1/Ark-logo-1-1.svg/1200px-Ark-logo-1-1.svg.png"
                         r = requests.get(json_data['ark_url'].format(symbol, '1d'))
-                        text = ""
+                        bought = ""
+                        sold = ""
                         for el in r.json()['trades']:
                             if el['direction'] == 'Buy':
-                                text += "{} bought {} shares of {} \n".format(symbol, el['shares'], el['ticker'])
+                                bought += "```{} shares of {}.```".format( el['shares'], el['ticker'])
                             else:
-                                text += "{} sold {} shares of {}\n".format(symbol, el['shares'], el['ticker'])
+                                sold += "```{} shares of {}.```".format(el['shares'], el['ticker'])
                         embed.set_thumbnail(url=msg_image)
-                        embed.add_field(name="Latest {} Trades within {}".format(symbol, '1d'), value='{}'.format(text),
+                        embed.add_field(name="Direction", value='{}'.format(await color_text("Bought")),
+                                        inline=False)
+                        embed.add_field(name="Trades", value='{}'.format(bought),
+                                        inline=False)
+                        embed.add_field(name="Direction", value='{}'.format(await color_text("Sold")),
+                                        inline=False)
+                        embed.add_field(name="`Trades`", value='{}'.format(sold),
                                         inline=False)
                     else:
                         embed.add_field(name="Wrong symbol. Please use one or more of ARKK, ARKQ, ARKF, or ARKW",
