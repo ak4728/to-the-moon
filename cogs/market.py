@@ -10,6 +10,10 @@ class MarketCommands(commands.Cog):
     !ticker [stock_name] {indicator_name}
         > !ticker TSLA
         > !ticker TSLA osc
+
+    !trades [ARK symbol]
+        > !trades ARKK
+        > !trades ARKQ
     """
 
     @commands.command(
@@ -61,4 +65,36 @@ class MarketCommands(commands.Cog):
 
         await ctx.channel.send(embed=embed)
 
+    @commands.command(
+        ticker="Retrieves latest ARK trades. [] = required, {} = optional",
+        brief="Retrieves latest ARK trades."
+    )
+    async def trades(self, ctx, *args):
+        """
+        Latest ARK trades. default symbol: ARKK, period:1d
+        !reddit 100
+        """
+        embed = discord.Embed(color=3426654)
+        async with ctx.channel.typing():
+            await asyncio.sleep(0.01)
+            if len(args) == 0:
+                embed.add_field(name="Missing Arguments",
+                                value="```!trades [ARK name] \n!trades ARKK```",
+                                inline=True)
+                msg_image = "https://cdn2.iconfinder.com/data/icons/mix-color-5/100/Mix_color_5__info-512.png"
+            else:
+                msg_image = "https://upload.wikimedia.org/wikipedia/en/thumb/c/c1/Ark-logo-1-1.svg/1200px-Ark-logo-1-1.svg.png"
+            for arg in args:
+                symbol = arg
+                r = requests.get(json_data['ark_url'].format(symbol, '1d'))
+                text = ""
+                for el in r.json()['trades']:
+                    if el['direction'] == 'Buy':
+                        text += "{} bought {} shares of {} \n".format(symbol, el['shares'], el['ticker'])
+                    else:
+                        text += "{} sold {} shares of {}\n".format(symbol, el['shares'], el['ticker'])
+                embed.set_thumbnail(url=msg_image)
+                embed.add_field(name="Latest {} Trades within {}".format(symbol, '1d'), value='{}'.format(text),
+                                    inline=False)
 
+        await ctx.channel.send(embed=embed)

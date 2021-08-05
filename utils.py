@@ -126,6 +126,7 @@ def get_market_exchange(ticker):
     return(screener, exchange)
 
 
+
 async def get_ticker_price(ticker):
     if "USD" in ticker.upper():
         ticker = ticker.upper().split("USD")[0]+"-USD"
