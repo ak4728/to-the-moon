@@ -12,13 +12,15 @@
 !watchlist
 !sentiment
 !reddit
+!trades
+!help
 
 ## How to setup
 1. Make a bot [here](https://discordapp.com/developers/applications/me) and grab the token
 
 2. Rename the file **config.json.example** to **config.json**, then fill in the required spots, such as token, prefix and game
 
-3. To install what you need, do **pip install -r requirements.txt**<br> #TODO
+3. To install what you need, do **pip install -r requirements.txt**<br>
 (If that doesn't work, do **python -m pip install -r requirements.txt**)<br>
 `NOTE: Use pip install with Administrator/sudo`
 
