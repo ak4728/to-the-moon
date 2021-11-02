@@ -19,3 +19,4 @@ cogs/__pycache__/config.cpython-36.pyc
 *.pyc
 *.pyc
 cogs/__pycache__/market.cpython-37.pyc
+*.pyc
