@@ -96,13 +96,13 @@ class MarketCommands(commands.Cog):
                             else:
                                 sold += "```{} shares of {}.```".format(el['shares'], el['ticker'])
                         embed.set_thumbnail(url=msg_image)
-                        embed.add_field(name="Direction", value='{}'.format(await color_text("Bought")),
+                        embed.add_field(name="Direction", value='{} \u200b'.format(await color_text("Bought")),
                                         inline=False)
-                        embed.add_field(name="Trades", value='{}'.format(bought),
+                        embed.add_field(name="Trades", value='{} \u200b'.format(bought),
                                         inline=False)
-                        embed.add_field(name="Direction", value='{}'.format(await color_text("Sold")),
+                        embed.add_field(name="Direction", value='{} \u200b'.format(await color_text("Sold")),
                                         inline=False)
-                        embed.add_field(name="`Trades`", value='{}'.format(sold),
+                        embed.add_field(name="`Trades`", value='{} \u200b'.format(sold),
                                         inline=False)
                     else:
                         embed.add_field(name="Wrong symbol. Please use one or more of ARKK, ARKQ, ARKF, or ARKW",
