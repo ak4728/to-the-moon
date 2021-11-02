@@ -1,6 +1,6 @@
 dhooks~=1.1.3
-discord.ext
-pretty_help
+discord
+discord-pretty_help
 discord~=1.0.1
 asyncio~=3.4.3
 asyncpraw~=7.2.0
