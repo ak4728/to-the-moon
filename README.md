@@ -25,10 +25,12 @@ Stock market watch bot for discord. Written in Python.
 5. You're done, enjoy your bot!
 
 
-<!-- Copy-paste in your Readme.md file -->
+
+
+## Contributors
 
 <a href = "https://github.com/Tanu-N-Prabhu/Python/graphs/contributors">
   <img src = "https://contrib.rocks/image?repo=ak4728/to-the-moon"/>
 </a>
 
-Made with [contributors-img](https://contrib.rocks).
+
