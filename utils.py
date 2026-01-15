@@ -1,146 +1,310 @@
 # helper functions will go here
 import re
 import asyncpraw
-import requests, random, json
-import pandas as pd
 import asyncio
-import snscrape.modules.twitter as sntwitter
+import discord
+import pandas as pd
+# import snscrape.modules.twitter as sntwitter  # Temporarily disabled due to compatibility issues
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from tradingview_ta import TA_Handler, Interval, Exchange
+from typing import Optional, Tuple, Dict, Any, List
 
-with open('config.json') as json_file:
-    json_data = json.load(json_file)
+# Import our new modules
+from config_manager import config_manager
+from http_client import http_client, RetryConfig
+from cache import cached, global_cache
+from file_manager import file_manager
 
-selected = json_data['default_int']
-
-intervals = {"1-minute": Interval.INTERVAL_1_MINUTE,
-             "5-minutes": Interval.INTERVAL_5_MINUTES,
-             "15-minutes": Interval.INTERVAL_15_MINUTES,
-             "1-hour": Interval.INTERVAL_1_HOUR,
-             "4-hours": Interval.INTERVAL_4_HOURS,
-             "1-day": Interval.INTERVAL_1_DAY,
-             "1-week": Interval.INTERVAL_1_WEEK,
-             "1-month": Interval.INTERVAL_1_MONTH,
-        }
+# Get config instance
+config = config_manager.config
 
 
 
-async def color_text(recommendation):
-    if "BUY" in recommendation:
-        rec_text = """```diff\n+{}```""".format(recommendation)
-    elif "SELL" in recommendation:
-        rec_text = """```diff\n-{}```""".format(recommendation)
-    elif "BOUGHT" in recommendation.upper():
-        rec_text = """```diff\n+{}```""".format("Bought")
-    elif "SOLD" in recommendation.upper():
-        rec_text = """```diff\n-{}```""".format("Sold")
+async def color_text(recommendation: str) -> str:
+    """
+    Format recommendation text with appropriate colors.
+    
+    Args:
+        recommendation: The recommendation text to format
+        
+    Returns:
+        Formatted text string with Discord color codes
+    """
+    recommendation_upper = recommendation.upper()
+    
+    if "BUY" in recommendation_upper or "BOUGHT" in recommendation_upper:
+        rec_text = f"```diff\n+{recommendation}```"
+    elif "SELL" in recommendation_upper or "SOLD" in recommendation_upper:
+        rec_text = f"```diff\n-{recommendation}```"
     else:
-        rec_text = """```fix\n{}```""".format(recommendation)
+        rec_text = f"```fix\n{recommendation}```"
+    
     return rec_text
 
 
 
-async def get_ma_osc(embed, stock, method='ma'):
-    method = method
-    analyzed = stock.get_analysis()
-    text = "```"
-    if method == 'ma':
-        d = analyzed.moving_averages
-        for k, v in d.items():
-            if k == "RECOMMENDATION":
-
-                embed.add_field(name="Moving Avgs Recommendation",
-                                value='{}'.format(await color_text(d['RECOMMENDATION'])), inline=False)
-            if k == "COMPUTE":
-                compute = d['COMPUTE']
-                for x, y in compute.items():
-                    text = text + str(x) + " : " + str(y) + "\n"
-                text = text + "```"
-                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
-    if method == 'osc':
-        d = analyzed.oscillators
-        for k, v in d.items():
-            if k == "RECOMMENDATION":
-                embed.add_field(name="Oscillators Recommendation",
-                                value="{}".format(await color_text(d['RECOMMENDATION'])), inline=False)
-            if k == "COMPUTE":
-                compute = d['COMPUTE']
-                for x, y in compute.items():
-                    text = text + str(x) + " : " + str(y) + "\n"
-                text = text + "```"
-                embed.add_field(name="Indicators", value="{}".format(text), inline=True)
-
-
-async def watchlist(ticker, fun="add"):
-    '''
-    Adds/removes the stock to the watchlist dictionary
-    E.g. watchlist("TSLA", "add")
-    '''
-    if fun == "add":
-        screener, exchange = get_market_exchange(ticker)
-        with open("watchlist.txt", "r") as f:
-            data = json.load(f)
-            f.close()
-            if ticker.upper() not in list(data.keys()):
-                with open("watchlist.txt", "w") as f:
-                    data[ticker.upper()] = {"screener": screener, "exchange": exchange}
-                    json.dump(data, f)
-                f.close()
-    if fun == "remove":
-        with open("watchlist.txt", "r") as f:
-            data = json.load(f)
-            f.close()
-            if ticker.upper() in list(data.keys()):
-                with open("watchlist.txt", "w") as f:
-                    data.pop(ticker.upper(), None)
-                    json.dump(data, f)
-                f.close()
-
-
-async def get_ticker(ticker="TSLA", interval=Interval.INTERVAL_4_HOURS, screener=None, exc=None):
-    if screener == None and exc == None:
-        screener, exc = get_market_exchange(ticker)
+async def get_ma_osc(embed: discord.Embed, stock: TA_Handler, method: str = 'ma') -> None:
+    """
+    Add moving averages or oscillators data to Discord embed.
+    
+    Args:
+        embed: Discord embed to modify
+        stock: TradingView TA_Handler instance
+        method: 'ma' for moving averages, 'osc' for oscillators
+    """
     try:
+        analyzed = stock.get_analysis()
+        text = "```"
+        
+        if method == 'ma':
+            d = analyzed.moving_averages
+            title = "Moving Avgs Recommendation"
+            indicator_title = "Moving Average Indicators"
+        elif method == 'osc':
+            d = analyzed.oscillators
+            title = "Oscillators Recommendation"
+            indicator_title = "Oscillator Indicators"
+        else:
+            raise ValueError(f"Invalid method: {method}. Use 'ma' or 'osc'")
+        
+        # Add recommendation
+        if 'RECOMMENDATION' in d:
+            embed.add_field(
+                name=title,
+                value=await color_text(d['RECOMMENDATION']),
+                inline=False
+            )
+        
+        # Add compute indicators
+        if 'COMPUTE' in d:
+            compute = d['COMPUTE']
+            for key, value in compute.items():
+                text += f"{key}: {value}\n"
+            text += "```"
+            embed.add_field(name=indicator_title, value=text, inline=True)
+            
+    except Exception as e:
+        embed.add_field(
+            name="Error",
+            value=f"```Failed to get {method} data: {str(e)[:100]}```",
+            inline=False
+        )
+
+
+async def watchlist(ticker: str, action: str = "add") -> Dict[str, Any]:
+    """
+    Add or remove stock from watchlist with proper error handling and locking.
+    
+    Args:
+        ticker: Stock symbol to add/remove
+        action: "add" or "remove"
+        
+    Returns:
+        Dict with status and message
+        
+    Raises:
+        ValueError: If action is invalid
+    """
+    if action not in ["add", "remove"]:
+        raise ValueError(f"Invalid action: {action}. Use 'add' or 'remove'")
+    
+    ticker = validate_ticker(ticker)
+    watchlist_file = "watchlist.txt"
+    
+    async with file_manager.locked_file_operation(watchlist_file):
+        try:
+            # Load existing watchlist
+            data = await file_manager.read_json_file(watchlist_file, default={})
+            
+            if action == "add":
+                if ticker not in data:
+                    try:
+                        screener, exchange = await get_market_exchange(ticker)
+                        data[ticker] = {"screener": screener, "exchange": exchange}
+                        await file_manager.write_json_file(watchlist_file, data)
+                        return {"status": "success", "message": f"Added {ticker} to watchlist"}
+                    except Exception as e:
+                        return {"status": "error", "message": f"Failed to add {ticker}: {str(e)}"}
+                else:
+                    return {"status": "info", "message": f"{ticker} already in watchlist"}
+            
+            else:  # remove
+                if ticker in data:
+                    data.pop(ticker, None)
+                    await file_manager.write_json_file(watchlist_file, data)
+                    return {"status": "success", "message": f"Removed {ticker} from watchlist"}
+                else:
+                    return {"status": "info", "message": f"{ticker} not found in watchlist"}
+                    
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to {action} {ticker}: {str(e)}"}
+
+
+def validate_ticker(ticker: str) -> str:
+    """
+    Validate and sanitize ticker symbol.
+    
+    Args:
+        ticker: Raw ticker symbol
+        
+    Returns:
+        Validated ticker symbol in uppercase
+        
+    Raises:
+        ValueError: If ticker is invalid
+    """
+    if not ticker or not isinstance(ticker, str):
+        raise ValueError("Ticker must be a non-empty string")
+    
+    # Clean ticker symbol
+    ticker = ticker.upper().strip()
+    
+    # Basic validation - letters, numbers, and common characters only
+    if not re.match(r'^[A-Z0-9.-]+$', ticker):
+        raise ValueError(f"Invalid ticker format: {ticker}")
+    
+    if len(ticker) > 10:  # Most tickers are max 5-6 chars
+        raise ValueError(f"Ticker too long: {ticker}")
+    
+    return ticker
+
+
+async def get_ticker(
+    ticker: str = "TSLA", 
+    interval: Interval = Interval.INTERVAL_4_HOURS, 
+    screener: Optional[str] = None, 
+    exchange: Optional[str] = None
+) -> Optional[TA_Handler]:
+    """
+    Get TA_Handler for a ticker with proper error handling.
+    
+    Args:
+        ticker: Stock symbol
+        interval: Trading interval
+        screener: Market screener (auto-detected if None)
+        exchange: Exchange (auto-detected if None)
+        
+    Returns:
+        TA_Handler instance or None if failed
+    """
+    try:
+        ticker = validate_ticker(ticker)
+        
+        if screener is None or exchange is None:
+            screener, exchange = await get_market_exchange(ticker)
+        
         stock = TA_Handler(
             symbol=ticker,
             screener=screener,
-            exchange=exc,
+            exchange=exchange,
             interval=interval
         )
+        
+        return stock
+        
     except Exception as e:
-        print(ticker, exc, screener, e)
-    return (stock)
+        print(f"Failed to get ticker {ticker}: {e}")
+        return None
 
-def get_market_exchange(ticker):
-    r = requests.get(json_data['symbol_url'].format(ticker))
-    response = {}
-    for el in r.json():
-        if el['symbol'] == ticker.upper():
-            if el['exchange'] in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX', "NYSE ARCA & MKT"]:
-                if el['exchange'] == "NYSE ARCA & MKT":
-                    print(el['exchange'])
+
+@cached(ttl=300)  # Cache for 5 minutes
+async def get_market_exchange(ticker: str) -> Tuple[str, str]:
+    """
+    Get market screener and exchange for a ticker with caching.
+    
+    Args:
+        ticker: Stock symbol
+        
+    Returns:
+        Tuple of (screener, exchange)
+        
+    Raises:
+        ValueError: If ticker not found or invalid response
+    """
+    ticker = validate_ticker(ticker)
+    
+    try:
+        # Use async HTTP client
+        await http_client.start()
+        
+        response_data = await http_client.get_json(
+            config.symbol_url.format(ticker),
+            retry_config=RetryConfig(max_attempts=3, base_delay=1.0)
+        )
+        
+        exchange = None
+        for item in response_data:
+            if item.get('symbol') == ticker:
+                raw_exchange = item.get('exchange', '')
+                
+                # Map exchange names
+                if raw_exchange == "NYSE ARCA & MKT":
                     exchange = "AMEX"
+                elif raw_exchange in ['NYSE', 'NASDAQ', 'BINANCE', 'BITTREX']:
+                    exchange = raw_exchange
                 else:
-                    exchange = el['exchange']
-    if exchange in ['NYSE', 'NASDAQ', 'ARCA',"AMEX"]:
-        screener = "america"
-    else:
-        screener = "crypto"
-    return(screener, exchange)
+                    exchange = raw_exchange
+                break
+        
+        if not exchange:
+            raise ValueError(f"Ticker {ticker} not found")
+        
+        # Determine screener based on exchange
+        if exchange in ['NYSE', 'NASDAQ', 'ARCA', 'AMEX']:
+            screener = "america"
+        else:
+            screener = "crypto"
+        
+        return screener, exchange
+        
+    except Exception as e:
+        raise ValueError(f"Failed to get market data for {ticker}: {e}")
 
 
-
-async def get_ticker_price(ticker):
-    if "USD" in ticker.upper():
-        ticker = ticker.upper().split("USD")[0]+"-USD"
-    elif ticker.upper() == 'IXIC':
-        ticker = "%5EIXIC"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
-    r = requests.get(json_data['api_url'].format(ticker.upper()), headers=headers)
-    x = r.json()
-    return(r.json()['quoteResponse']['result'][0]['regularMarketPrice'])
+@cached(ttl=60)  # Cache for 1 minute
+async def get_ticker_price(ticker: str) -> Optional[float]:
+    """
+    Get current price for a ticker with caching and error handling.
+    
+    Args:
+        ticker: Stock symbol
+        
+    Returns:
+        Current price or None if failed
+    """
+    try:
+        ticker = validate_ticker(ticker)
+        
+        # Handle special cases
+        if "USD" in ticker:
+            ticker = ticker.split("USD")[0] + "-USD"
+        elif ticker == 'IXIC':
+            ticker = "%5EIXIC"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+        }
+        
+        await http_client.start()
+        
+        response_data = await http_client.get_json(
+            config.api_url.format(ticker),
+            headers=headers,
+            retry_config=RetryConfig(max_attempts=3, base_delay=0.5)
+        )
+        
+        if 'quoteResponse' in response_data and 'result' in response_data['quoteResponse']:
+            results = response_data['quoteResponse']['result']
+            if results and len(results) > 0:
+                return results[0].get('regularMarketPrice')
+        
+        return None
+        
+    except Exception as e:
+        print(f"Failed to get price for {ticker}: {e}")
+        return None
 
 
 
@@ -155,36 +319,20 @@ def labeler(f):
 
 
 def get_sentiment(keyword="TSLA", dollar=True):
-    keyword = keyword.upper()
-    if dollar:
-        keyword = "$" + keyword
-    if "USDT" in keyword:
-        keyword = keyword.rstrip("USDT")
-    # Configuration
-    tweets = pd.DataFrame(columns=['id', 'date', 'content'])
-    time_now = (datetime.now(timezone.utc) - timedelta(hours=8))
-    analyzer = SentimentIntensityAnalyzer()
-
-    # Tweets within the last hour
-    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(
-            keyword + ' lang:en since:' + time_now.strftime("%Y-%m-%d") + ' -filter:replies').get_items()):
-        date = (tweet.date - timedelta(hours=7))
-        if date < time_now:
-            break
-        tweets.loc[i] = [tweet.id, tweet.date, tweet.content]
-
-    # Data engineering
-    tweets['compound'] = [analyzer.polarity_scores(x)['compound'] for x in tweets['content']]
-    tweets['neg'] = [analyzer.polarity_scores(x)['neg'] for x in tweets['content']]
-    tweets['neu'] = [analyzer.polarity_scores(x)['neu'] for x in tweets['content']]
-    tweets['pos'] = [analyzer.polarity_scores(x)['pos'] for x in tweets['content']]
-    tweets['label'] = [x for x in map(labeler, tweets['compound'])]
-
-    pos = tweets[tweets['label'] == 'pos'].count()['pos']
-    neg = tweets[tweets['label'] == 'neg'].count()['neg']
-    neu = tweets[tweets['label'] == 'neu'].count()['neu']
-
-    return (tweets, pos, neg, neu)
+    """
+    Sentiment analysis using Twitter data - TEMPORARILY DISABLED
+    TODO: Fix snscrape compatibility issues
+    """
+    # Temporarily return dummy data due to snscrape compatibility issues
+    import pandas as pd
+    
+    # Create empty DataFrame with expected columns
+    tweets = pd.DataFrame(columns=['id', 'date', 'content', 'compound', 'neg', 'neu', 'pos', 'label'])
+    
+    # Return dummy sentiment data
+    pos, neg, neu = 0, 0, 1  # All neutral for now
+    
+    return tweets, pos, neg, neu
 
 
 def sentiment_response(stock="TSLA"):
@@ -204,37 +352,57 @@ def sentiment_response(stock="TSLA"):
     hook.send(embed=embed)
 
 async def get_reddit_stocks(sr_limit=100):
-    reddit = asyncpraw.Reddit(
-        client_id = json_data['client_id'],
-        client_secret = json_data['client_secret'],
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
-    )
+    """Get stock mentions from r/wallstreetbets."""
+    try:
+        reddit = asyncpraw.Reddit(
+            client_id=config.client_id,
+            client_secret=config.client_secret,
+            user_agent=config.user_agent
+        )
 
-    subreddit = await reddit.subreddit("wallstreetbets")
+        if not config.client_id or not config.client_secret:
+            # Return empty DataFrame if Reddit credentials not configured
+            return pd.DataFrame(columns=['Term', 'Company_Name', 'Frequency'])
 
-    df = {}
-    async for submission in subreddit.hot(limit=sr_limit):
-        df[submission.title] = submission.selftext
+        subreddit = await reddit.subreddit("wallstreetbets")
 
-    regex = re.compile('[^a-zA-Z ]')
-    word_dict = {}
+        df = {}
+        async for submission in subreddit.hot(limit=sr_limit):
+            df[submission.title] = submission.selftext
 
-    for (k, v) in df.items():
-        title = k
-        title = regex.sub('', title)
-        title_words = title.split(' ')
-        content = v
-        content = regex.sub('', content)
-        content_words = content.split(' ')
-        words = title_words + content_words
-        for x in words:
-            if x in ['A', 'B', 'GO', 'ARE', 'ON', 'IT', 'ALL', 'NEXT', 'PUMP', 'AT', 'NOW', 'FOR', 'TD', 'CEO', 'AM', 'K', 'BIG', 'BY', 'LOVE', 'CAN', 'BE', 'SO', 'OUT', 'STAY', 'OR', 'NEW','RH','EDIT','ONE','ANY']:
-                pass
-            elif x in word_dict:
-                word_dict[x] += 1
-            else:
-                word_dict[x] = 1
-    wordbag = pd.DataFrame.from_dict(list(word_dict.items())).rename(columns = {0:"Term", 1:"Frequency"})
-    tickers = pd.read_csv('tickers.csv').rename(columns = {"Symbol":"Term", "Name":"Company_Name"})
-    stocks = pd.merge(tickers, wordbag, on="Term").sort_values(by="Frequency", ascending = False).head(20)
-    return(stocks)
+        regex = re.compile('[^a-zA-Z ]')
+        word_dict = {}
+
+        for (k, v) in df.items():
+            title = k
+            title = regex.sub('', title)
+            title_words = title.split(' ')
+            content = v
+            content = regex.sub('', content)
+            content_words = content.split(' ')
+            words = title_words + content_words
+            for x in words:
+                if x in ['A', 'B', 'GO', 'ARE', 'ON', 'IT', 'ALL', 'NEXT', 'PUMP', 'AT', 'NOW', 'FOR', 'TD', 'CEO', 'AM', 'K', 'BIG', 'BY', 'LOVE', 'CAN', 'BE', 'SO', 'OUT', 'STAY', 'OR', 'NEW','RH','EDIT','ONE','ANY']:
+                    pass
+                elif x in word_dict:
+                    word_dict[x] += 1
+                else:
+                    word_dict[x] = 1
+        
+        wordbag = pd.DataFrame.from_dict(list(word_dict.items())).rename(columns={0:"Term", 1:"Frequency"})
+        
+        # Check if tickers.csv exists
+        tickers_file = Path('tickers.csv')
+        if not tickers_file.exists():
+            print("Warning: tickers.csv not found. Creating dummy data.")
+            return wordbag.head(20)
+        
+        tickers = pd.read_csv('tickers.csv').rename(columns={"Symbol":"Term", "Name":"Company_Name"})
+        stocks = pd.merge(tickers, wordbag, on="Term").sort_values(by="Frequency", ascending=False).head(20)
+        
+        await reddit.close()
+        return stocks
+        
+    except Exception as e:
+        print(f"Error getting Reddit stocks: {e}")
+        return pd.DataFrame(columns=['Term', 'Company_Name', 'Frequency'])

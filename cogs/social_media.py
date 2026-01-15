@@ -1,7 +1,8 @@
 import discord
 import asyncio
 from discord.ext import commands
-from utils import *
+from typing import Optional, Tuple
+from utils import get_sentiment, get_reddit_stocks, validate_ticker
 
 
 class SocialMedia(commands.Cog):

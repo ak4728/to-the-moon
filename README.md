@@ -12,17 +12,63 @@ Stock market watch bot for discord. Written in Python.
 ![image](https://user-images.githubusercontent.com/5445968/128292062-26fcce26-ca2a-46fd-ac01-e55774921472.png)
 
 ## How to setup
-1. Make a bot [here](https://discordapp.com/developers/applications/me) and grab the token
 
-2. Rename the file **config.json.example** to **config.json**, then fill in the required spots, such as token, prefix and game
+### Quick Setup (Recommended)
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd to-the-moon
+   ```
 
-3. To install what you need, do **pip install -r requirements.txt**<br>
-(If that doesn't work, do **python -m pip install -r requirements.txt**)<br>
-`NOTE: Use pip install with Administrator/sudo`
+2. **Run the setup script**
+   ```bash
+   python setup.py
+   ```
+   This will:
+   - Create `config.json` from the sample template
+   - Prompt you for your Discord bot token and other settings
+   - Set up the watchlist file
+   - Guide you through the configuration process
 
-4. Start the bot by having the cmd/terminal inside the bot folder and type **python main.py**
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   (If that doesn't work, try `python -m pip install -r requirements.txt`)
 
-5. You're done, enjoy your bot!
+4. **Start the bot**
+   ```bash
+   python main.py
+   ```
+
+### Manual Setup
+1. **Create a Discord bot** at [Discord Developer Portal](https://discord.com/developers/applications)
+   - Create a new application
+   - Go to "Bot" section and create a bot
+   - Copy the token (keep it secret!)
+
+2. **Configure the bot**
+   - Copy `sample-config.json` to `config.json`
+   - Edit `config.json` and fill in at minimum:
+     - `discord_token`: Your bot token from step 1
+     - `webhook_url`: Discord webhook URL for trading signals (optional)
+
+3. **Install and run** (same as steps 3-4 above)
+
+### Configuration Options
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `discord_token` | ✅ Yes | Bot token from Discord Developer Portal |
+| `webhook_url` | ❌ No | Discord webhook for trading signals |
+| `client_id` | ❌ No | Reddit app client ID (for Reddit features) |
+| `client_secret` | ❌ No | Reddit app client secret (for Reddit features) |
+| `default_int` | ✅ Yes | Default trading interval (pre-configured) |
+
+### Security Notes ⚠️
+- **Never commit `config.json` to git** - it contains sensitive tokens
+- The `.gitignore` file excludes `config.json` automatically
+- Keep your Discord token and API keys secret
 
 
 
